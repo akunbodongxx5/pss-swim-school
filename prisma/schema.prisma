@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum LevelBundle {
+  MIXED_1_3
+  LEVEL_4
+  MIXED_5_6
+  LEVEL_7
+  MIXED_8_9
+}
+
+model Coach {
+  id   String @id @default(cuid())
+  name String
+  /// JSON array sebagai teks, mis. "[1,2,3,4,8,9]" — hindari tipe Json Prisma yang gagal baca data SQLite tidak valid.
+  teachLevels String @default("[1,2,3,4,5,6,7,8,9]")
+
+  sessionsPrimary   ScheduledSession[] @relation("CoachPrimary")
+  sessionsSecondary ScheduledSession[] @relation("CoachSecondary")
+}
+
+model Student {
+  id     String @id @default(cuid())
+  name   String
+  level  Int
+
+  enrollments Enrollment[]
+  conflictsA  ConflictPair[] @relation("ConflictA")
+  conflictsB  ConflictPair[] @relation("ConflictB")
+  waitlist    WaitlistEntry[]
+}
+
+/// Pasangan murid yang tidak boleh punya sesi di hari yang sama (satu lokasi).
+model ConflictPair {
+  id         String  @id @default(cuid())
+  studentAId String
+  studentBId String
+  studentA   Student @relation("ConflictA", fields: [studentAId], references: [id], onDelete: Cascade)
+  studentB   Student @relation("ConflictB", fields: [studentBId], references: [id], onDelete: Cascade)
+
+  @@unique([studentAId, studentBId])
+}
+
+model ScheduledSession {
+  id                 String       @id @default(cuid())
+  /// Disimpan sebagai UTC midnight untuk tanggal kalender (logika tampilan pakai WIB).
+  date               DateTime
+  /// Jam mulai 0–23 (WIB).
+  hour               Int
+  /// Line 1 untuk 1–3; line 2–4 untuk level lebih tinggi.
+  lane               Int
+  bundle             LevelBundle
+  coachPrimaryId     String
+  coachSecondaryId   String?
+  coachPrimary       Coach        @relation("CoachPrimary", fields: [coachPrimaryId], references: [id])
+  coachSecondary     Coach?       @relation("CoachSecondary", fields: [coachSecondaryId], references: [id])
+  enrollments        Enrollment[]
+}
+
+model Enrollment {
+  id                 String @id @default(cuid())
+  scheduledSessionId String
+  studentId          String
+  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  session            ScheduledSession @relation(fields: [scheduledSessionId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduledSessionId, studentId])
+}
+
+model WaitlistEntry {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  note      String?
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+}
+
+/// Pengecualian: tanggal 29–31 default tanpa kelas; isi openTailDays (JSON array) untuk membuka tanggal tertentu di bulan itu.
+model ScheduleMonthConfig {
+  id   String @id @default(cuid())
+  year  Int
+  month Int
+  /// JSON array angka 29|30|31, mis. "[29,30]"
+  openTailDays String @default("[]")
+
+  @@unique([year, month])
+}
