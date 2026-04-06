@@ -1,15 +1,24 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
+import { BrandingProvider } from "@/lib/branding-context";
 import { AppProviders } from "@/lib/i18n-context";
 import { AppShell } from "@/components/AppShell";
+import { ensureSchoolBrandingRow, getSchoolBranding } from "@/lib/school-branding-server";
 
-export const metadata: Metadata = {
-  title: "PSS Swim School",
-  description: "Internal swim school schedule and students",
-  appleWebApp: { capable: true, title: "PSS Swim", statusBarStyle: "default" },
-  formatDetection: { telephone: false },
-};
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata(): Promise<Metadata> {
+  await ensureSchoolBrandingRow();
+  const b = await getSchoolBranding();
+  const appleShort = b.schoolName.length > 17 ? `${b.schoolName.slice(0, 16)}…` : b.schoolName;
+  return {
+    title: { default: b.schoolName, template: `%s | ${b.schoolName}` },
+    description: `Jadwal, murid, dan pelatih — ${b.schoolName}`,
+    appleWebApp: { capable: true, title: appleShort, statusBarStyle: "default" },
+    formatDetection: { telephone: false },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -38,7 +47,9 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').catch(function(){});
 }`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  await ensureSchoolBrandingRow();
+  const branding = await getSchoolBranding();
   const role = (cookies().get("pss_role")?.value === "coach" ? "coach" : "admin") as "admin" | "coach";
 
   return (
@@ -49,7 +60,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-[100dvh] antialiased">
         <AppProviders>
-          <AppShell initialRole={role}>{children}</AppShell>
+          <BrandingProvider initial={branding}>
+            <AppShell initialRole={role}>{children}</AppShell>
+          </BrandingProvider>
         </AppProviders>
       </body>
     </html>

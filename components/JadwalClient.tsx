@@ -1,7 +1,7 @@
 "use client";
 
 import type { LevelBundle } from "@prisma/client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { coachCanTeachBundle, maxStudentsForBundle, occupancyRatio } from "@/lib/domain";
 import { useApp } from "@/lib/i18n-context";
 import { tailDayOptionsForMonth } from "@/lib/calendar-month-rules";
@@ -453,7 +453,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       {toast && (
         <div
           style={{ position: "fixed", top: "1rem", left: "1rem", right: "1rem", zIndex: 70 }}
-          className={`mx-auto max-w-lg rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
+          className={`pss-toast mx-auto max-w-lg rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
             toast.type === "ok"
               ? "bg-emerald-600 text-white"
               : "bg-red-600 text-white"
@@ -734,7 +734,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
           <button
             type="button"
             onClick={() => setViewMode("list")}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`pss-btn rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
               viewMode === "list"
                 ? "bg-[var(--accent)] text-white"
                 : "text-[var(--muted)] hover:text-[var(--text)]"
@@ -745,7 +745,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
           <button
             type="button"
             onClick={() => setViewMode("timetable")}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`pss-btn rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
               viewMode === "timetable"
                 ? "bg-[var(--accent)] text-white"
                 : "text-[var(--muted)] hover:text-[var(--text)]"
@@ -760,15 +760,16 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       {viewMode === "list" && (
         <section className="space-y-3">
           <h2 className="text-base font-semibold">{t("schedule.sessionList")}</h2>
-          <ul className="space-y-3">
-            {filteredSessions.map((s) => {
+          <ul className="pss-stagger space-y-3">
+            {filteredSessions.map((s, idx) => {
               const cc = s.coachSecondaryId ? 2 : 1;
               const max = maxStudentsForBundle(s.bundle, cc);
               const occ = occupancyRatio(s.enrollments.length, max);
               return (
                 <li
                   key={s.id}
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
+                  style={{ "--pss-delay": `${Math.min(idx, 12) * 40}ms` } as CSSProperties}
+                  className="pss-card-lift rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
@@ -898,8 +899,8 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
 
       {/* ── Conflict modal ──────────────────────────────────── */}
       {conflictModal && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center">
-          <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl">
+        <div className="pss-modal-root fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center">
+          <div className="pss-modal-panel max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl">
             <h3 className="font-semibold text-[var(--warn)]">{t("schedule.conflictTitle")}</h3>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[var(--muted)]">
               {conflictModal.labels.map((l, i) => (

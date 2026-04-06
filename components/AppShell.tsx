@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { clearAllSchedulesWithUndo } from "@/lib/schedule-undo";
+import { useBranding } from "@/lib/branding-context";
 import { useApp, type ThemeMode } from "@/lib/i18n-context";
 
 type Role = "admin" | "coach";
@@ -67,6 +68,7 @@ function titleForPath(pathname: string, t: (k: string) => string): string {
   if (pathname.startsWith("/pelatih")) return t("titles.coaches");
   if (pathname.startsWith("/waitlist")) return t("titles.waitlist");
   if (pathname.startsWith("/login")) return t("titles.login");
+  if (pathname.startsWith("/settings")) return t("titles.settings");
   return t("appName");
 }
 
@@ -74,12 +76,18 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const { t, locale, setLocale, theme, setTheme, m } = useApp();
+  const { branding } = useBranding();
   const [menuOpen, setMenuOpen] = useState(false);
   const [clearingSchedule, setClearingSchedule] = useState(false);
 
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const page = titleForPath(pathname, t);
+    document.title = `${page} | ${branding.schoolName}`;
+  }, [pathname, branding.schoolName, t]);
 
   const title = titleForPath(pathname, t);
   const roleLabel = initialRole === "coach" ? t("login.coach") : t("login.admin");
@@ -96,12 +104,24 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
         className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
       >
-        <div className="mx-auto flex h-12 max-w-lg items-center justify-between px-4">
-          <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
+        <div className="mx-auto flex h-12 max-w-lg items-center justify-between gap-2 px-4">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {branding.logoDataUrl ? (
+              <img
+                src={branding.logoDataUrl}
+                alt=""
+                className="h-9 w-9 shrink-0 rounded-lg object-contain ring-1 ring-[var(--border)]"
+              />
+            ) : null}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[10px] font-medium leading-tight text-[var(--muted)]">{branding.schoolName}</p>
+              <h1 className="truncate text-base font-semibold leading-tight tracking-tight">{title}</h1>
+            </div>
+          </div>
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-[var(--text)] active:bg-[var(--border)]"
+            className="pss-btn flex h-11 w-11 items-center justify-center rounded-xl text-[var(--text)] active:bg-[var(--border)]"
             aria-label={m.menu.title}
           >
             <IconMenu />
@@ -113,11 +133,13 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
         className="mx-auto w-full max-w-lg flex-1 px-4 pb-28 pt-4"
         style={{ paddingBottom: "max(7rem, calc(5.5rem + env(safe-area-inset-bottom)))" }}
       >
-        {children}
+        <div key={pathname} className="pss-animate-page">
+          {children}
+        </div>
       </main>
 
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md"
+        className="bottom-nav-shell fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md"
         style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
       >
         <div className="mx-auto flex max-w-lg items-stretch justify-around px-2 pt-1">
@@ -127,7 +149,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
               <Link
                 key={href}
                 href={href}
-                className={`flex min-h-[3.25rem] min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[10px] font-medium transition-colors ${
+                className={`pss-nav-tab flex min-h-[3.25rem] min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[10px] font-medium ${
                   active ? "text-[var(--accent)]" : "text-[var(--muted)]"
                 }`}
               >
@@ -140,10 +162,15 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
       </nav>
 
       {menuOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/40" role="presentation">
-          <button type="button" className="h-full flex-1 cursor-default" aria-hidden onClick={() => setMenuOpen(false)} />
+        <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
+          <button
+            type="button"
+            className="pss-menu-backdrop absolute inset-0 cursor-default bg-black/40"
+            aria-hidden
+            onClick={() => setMenuOpen(false)}
+          />
           <aside
-            className="h-full w-[min(100%,20rem)] border-l border-[var(--border)] bg-[var(--surface)] shadow-xl"
+            className="pss-menu-panel relative z-10 h-full w-[min(100%,20rem)] border-l border-[var(--border)] bg-[var(--surface)] shadow-xl"
             style={{ paddingTop: "env(safe-area-inset-top)" }}
           >
             <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
@@ -151,7 +178,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl active:bg-[var(--border)]"
+                className="pss-btn flex h-10 w-10 items-center justify-center rounded-xl active:bg-[var(--border)]"
                 aria-label="Close"
               >
                 <IconClose />
@@ -161,21 +188,28 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
               <Link
                 href="/"
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium active:bg-[var(--border)]"
+                className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
               >
                 {m.menu.home}
               </Link>
               <Link
                 href="/waitlist"
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium active:bg-[var(--border)]"
+                className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
               >
                 {m.menu.waitlist}
               </Link>
               <Link
+                href="/settings"
+                onClick={() => setMenuOpen(false)}
+                className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
+              >
+                {m.menu.schoolSettings}
+              </Link>
+              <Link
                 href="/login"
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium active:bg-[var(--border)]"
+                className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
               >
                 {m.menu.roleLogin}
               </Link>
@@ -200,7 +234,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                       }
                     })();
                   }}
-                  className="w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-[var(--danger)] active:bg-[var(--border)] disabled:opacity-50"
+                  className="pss-btn w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-[var(--danger)] active:bg-[var(--border)] disabled:opacity-50"
                 >
                   {clearingSchedule ? "…" : m.menu.clearAllSchedule}
                 </button>
@@ -220,7 +254,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                     key={mode}
                     type="button"
                     onClick={() => setTheme(mode)}
-                    className={`rounded-full px-3 py-2 text-xs font-medium ${
+                    className={`pss-btn rounded-full px-3 py-2 text-xs font-medium ${
                       theme === mode
                         ? "bg-[var(--accent)] text-white"
                         : "bg-[var(--border)]/40 text-[var(--text)]"
@@ -240,7 +274,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                 <button
                   type="button"
                   onClick={() => setLocale("id")}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold ${
+                  className={`pss-btn rounded-full px-4 py-2 text-xs font-semibold ${
                     locale === "id" ? "bg-[var(--accent)] text-white" : "bg-[var(--border)]/40"
                   }`}
                 >
@@ -249,7 +283,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                 <button
                   type="button"
                   onClick={() => setLocale("en")}
-                  className={`rounded-full px-4 py-2 text-xs font-semibold ${
+                  className={`pss-btn rounded-full px-4 py-2 text-xs font-semibold ${
                     locale === "en" ? "bg-[var(--accent)] text-white" : "bg-[var(--border)]/40"
                   }`}
                 >

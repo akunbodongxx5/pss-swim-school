@@ -1,10 +1,16 @@
 import type { MetadataRoute } from "next";
+import { ensureSchoolBrandingRow, getSchoolBranding } from "@/lib/school-branding-server";
 
-export default function manifest(): MetadataRoute.Manifest {
+export const dynamic = "force-dynamic";
+
+export default async function manifest(): Promise<MetadataRoute.Manifest> {
+  await ensureSchoolBrandingRow();
+  const b = await getSchoolBranding();
+  const short = b.schoolName.length > 12 ? `${b.schoolName.slice(0, 11)}…` : b.schoolName;
   return {
-    name: "PSS Swim School",
-    short_name: "PSS Swim",
-    description: "Schedule, students, and coaches for swim school",
+    name: b.schoolName,
+    short_name: short,
+    description: `Schedule, students, and coaches — ${b.schoolName}`,
     start_url: "/jadwal",
     display: "standalone",
     orientation: "portrait-primary",

@@ -230,7 +230,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
           return (
             <li
               key={c.id}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm"
+              className="pss-card-lift rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm"
             >
               {/* Collapsed header — always visible */}
               <button
@@ -284,7 +284,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
 
               {/* Expanded edit form */}
               {canEdit && expanded && (
-                <div className="border-t border-[var(--border)] px-4 pb-4 pt-3 space-y-3">
+                <div className="pss-expand-in border-t border-[var(--border)] space-y-3 px-4 pb-4 pt-3">
                   <label className="block text-sm">
                     {t("coaches.thName")}
                     <input

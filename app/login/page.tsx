@@ -40,7 +40,7 @@ export default function LoginPage() {
       <p className="text-sm leading-relaxed text-[var(--muted)]">{t("login.body")}</p>
       <form
         onSubmit={submit}
-        className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm"
+        className="pss-animate-fade-in-up space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm"
       >
         <label className="block text-sm">
           <span className="text-[var(--muted)]">{t("login.role")}</span>

@@ -15,6 +15,14 @@ enum LevelBundle {
   MIXED_8_9
 }
 
+/// Satu baris global (id = 1): nama & logo sekolah untuk white-label.
+model SchoolBranding {
+  id          Int     @id @default(1)
+  schoolName  String  @default("Swim School")
+  /// data:image/...;base64,... atau SVG UTF-8 — null = tanpa logo
+  logoDataUrl String? @db.Text
+}
+
 model Coach {
   id   String @id @default(cuid())
   name String

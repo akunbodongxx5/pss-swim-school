@@ -7,6 +7,7 @@ export type MessageTree = {
     title: string;
     home: string;
     waitlist: string;
+    schoolSettings: string;
     roleLogin: string;
     clearAllSchedule: string;
     clearAllScheduleConfirm: string;
@@ -18,7 +19,15 @@ export type MessageTree = {
     themeSystem: string;
     language: string;
   };
-  titles: { home: string; schedule: string; students: string; coaches: string; waitlist: string; login: string };
+  titles: {
+    home: string;
+    schedule: string;
+    students: string;
+    coaches: string;
+    waitlist: string;
+    login: string;
+    settings: string;
+  };
   home: {
     headline: string;
     body: string;
@@ -124,6 +133,30 @@ export type MessageTree = {
     cancelEdit: string;
     searchPlaceholder: string;
     emptyList: string;
+  };
+  settings: {
+    intro: string;
+    schoolNameLabel: string;
+    schoolNameHint: string;
+    logoLabel: string;
+    logoHint: string;
+    pickLogo: string;
+    clearLogo: string;
+    save: string;
+    saving: string;
+    saved: string;
+    coachReadOnly: string;
+    preview: string;
+    errors: {
+      schoolName_invalid: string;
+      schoolName_too_short: string;
+      schoolName_too_long: string;
+      logo_invalid: string;
+      logo_too_large: string;
+      logo_format: string;
+      forbidden: string;
+      generic: string;
+    };
   };
   waitlist: {
     hint: string;

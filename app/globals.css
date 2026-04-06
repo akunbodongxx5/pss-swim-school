@@ -72,6 +72,204 @@ input[type="checkbox"] {
   accent-color: var(--accent);
 }
 
+/* ── Motion (respect reduced motion below) ───────────────────── */
+@keyframes pss-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pss-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pss-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes pss-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pss-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pss-modal-backdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pss-modal-panel {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pss-nav-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pss-expand-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.pss-expand-in {
+  animation: pss-expand-in 0.28s ease-out both;
+}
+
+.pss-animate-fade-in {
+  animation: pss-fade-in 0.35s ease-out both;
+}
+
+.pss-animate-fade-in-up {
+  animation: pss-fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pss-animate-page {
+  animation: pss-fade-in-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pss-stagger > * {
+  animation: pss-fade-in-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--pss-delay, 0ms);
+}
+
+.pss-menu-backdrop {
+  animation: pss-fade-in 0.22s ease-out both;
+}
+
+.pss-menu-panel {
+  animation: pss-drawer-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pss-toast {
+  animation: pss-toast-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pss-modal-root {
+  animation: pss-modal-backdrop 0.22s ease-out both;
+}
+
+.pss-modal-panel {
+  animation: pss-modal-panel 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pss-nav-tab {
+  transition:
+    color 0.2s ease,
+    transform 0.18s ease;
+}
+
+.pss-nav-tab:active {
+  transform: scale(0.94);
+}
+
+.pss-card-lift {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.pss-card-lift:active {
+  transform: scale(0.99);
+}
+
+.pss-btn {
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    opacity 0.18s ease,
+    transform 0.15s ease;
+}
+
+.pss-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.bottom-nav-shell {
+  animation: pss-nav-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pss-animate-fade-in,
+  .pss-animate-fade-in-up,
+  .pss-animate-page,
+  .pss-stagger > *,
+  .pss-menu-root,
+  .pss-menu-backdrop,
+  .pss-menu-panel,
+  .pss-toast,
+  .pss-modal-root,
+  .pss-modal-panel,
+  .bottom-nav-shell,
+  .pss-expand-in {
+    animation: none !important;
+  }
+
+  .pss-nav-tab:active,
+  .pss-card-lift:active,
+  .pss-btn:active:not(:disabled) {
+    transform: none;
+  }
+
+  .pss-nav-tab,
+  .pss-card-lift,
+  .pss-btn {
+    transition: none;
+  }
+}
+
 @media print {
   nav, header, .print-hide {
     display: none !important;

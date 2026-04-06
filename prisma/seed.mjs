@@ -191,6 +191,13 @@ async function main() {
   }
 
   const sessionCount = await prisma.scheduledSession.count();
+
+  await prisma.schoolBranding.upsert({
+    where: { id: 1 },
+    create: { id: 1, schoolName: "PSS Swim School", logoDataUrl: null },
+    update: {},
+  });
+
   console.log(
     `Seed: ${students.length} murid (nama + level 1–9), ${sessionCount} sesi jadwal (${WEEKS} minggu). ` +
       "L1–4: 1×/minggu; L5–9: 2×/minggu."

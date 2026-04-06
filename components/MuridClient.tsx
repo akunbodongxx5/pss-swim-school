@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useApp } from "@/lib/i18n-context";
 
 type Student = { id: string; name: string; level: number };
@@ -243,11 +243,12 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
         ) : students.length === 0 ? (
           <EmptyState message={t("students.emptyList")} />
         ) : (
-          <ul className="mt-3 space-y-2">
-            {filteredStudents.map((s) => (
+          <ul className="pss-stagger mt-3 space-y-2">
+            {filteredStudents.map((s, idx) => (
               <li
                 key={s.id}
-                className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/40 px-4 py-3 text-sm transition-colors hover:bg-[var(--bg)]/70"
+                style={{ "--pss-delay": `${Math.min(idx, 14) * 35}ms` } as CSSProperties}
+                className="pss-card-lift rounded-xl border border-[var(--border)] bg-[var(--bg)]/40 px-4 py-3 text-sm transition-colors duration-200 hover:bg-[var(--bg)]/70"
               >
                 {editingId === s.id ? (
                   <div className="space-y-3">

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import { useBranding } from "@/lib/branding-context";
 import { useApp } from "@/lib/i18n-context";
 
 interface Stats {
@@ -12,7 +13,8 @@ interface Stats {
 }
 
 export function HomeClient() {
-  const { t, m } = useApp();
+  const { t } = useApp();
+  const { branding } = useBranding();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +37,7 @@ export function HomeClient() {
 
   return (
     <div className="space-y-6">
-      <p className="text-lg font-semibold tracking-tight">{t("home.statsTitle")}</p>
+      <p className="pss-animate-fade-in text-lg font-semibold tracking-tight">{t("home.statsTitle")}</p>
 
       {loading ? (
         <div className="grid grid-cols-2 gap-3">
@@ -50,11 +52,12 @@ export function HomeClient() {
           ))}
         </div>
       ) : stats ? (
-        <div className="grid grid-cols-2 gap-3">
-          {cards.map((c) => (
+        <div className="pss-stagger grid grid-cols-2 gap-3">
+          {cards.map((c, i) => (
             <div
               key={c.label}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4"
+              style={{ "--pss-delay": `${i * 55}ms` } as CSSProperties}
+              className="pss-card-lift rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
             >
               <p className="text-2xl font-bold text-[var(--accent)]">{c.value}</p>
               <p className="mt-1 text-xs text-[var(--muted)]">{c.label}</p>
@@ -68,18 +71,18 @@ export function HomeClient() {
       <div className="flex flex-col gap-3">
         <Link
           href="/jadwal"
-          className="flex min-h-12 items-center justify-center rounded-2xl bg-[var(--accent)] px-5 text-center text-sm font-semibold text-white shadow-sm active:opacity-90"
+          className="pss-btn flex min-h-12 items-center justify-center rounded-2xl bg-[var(--accent)] px-5 text-center text-sm font-semibold text-white shadow-sm active:opacity-90"
         >
           {t("home.openSchedule")}
         </Link>
         <Link
           href="/murid"
-          className="flex min-h-12 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 text-center text-sm font-semibold text-[var(--accent)] active:bg-[var(--border)]/30"
+          className="pss-btn flex min-h-12 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-5 text-center text-sm font-semibold text-[var(--accent)] active:bg-[var(--border)]/30"
         >
           {t("home.manageStudents")}
         </Link>
       </div>
-      <p className="text-center text-xs text-[var(--muted)]">{m.appName}</p>
+      <p className="text-center text-xs text-[var(--muted)]">{branding.schoolName}</p>
     </div>
   );
 }
