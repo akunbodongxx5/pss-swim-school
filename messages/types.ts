@@ -24,6 +24,12 @@ export type MessageTree = {
     body: string;
     openSchedule: string;
     manageStudents: string;
+    statsTitle: string;
+    sessionsThisWeek: string;
+    totalStudents: string;
+    totalCoaches: string;
+    todaySessions: string;
+    noData: string;
   };
   login: {
     headline: string;
@@ -90,6 +96,11 @@ export type MessageTree = {
     undoDismiss: string;
     undoRestoreOk: string;
     undoRestoreFail: string;
+    searchPlaceholder: string;
+    timetableView: string;
+    listView: string;
+    exportPrint: string;
+    filterAll: string;
   };
   students: {
     coachReadOnly: string;
@@ -111,6 +122,8 @@ export type MessageTree = {
     edit: string;
     updated: string;
     cancelEdit: string;
+    searchPlaceholder: string;
+    emptyList: string;
   };
   waitlist: {
     hint: string;
@@ -137,4 +150,5 @@ export type MessageTree = {
     deleted: string;
   };
   bundles: Record<string, string>;
+  days: { mon: string; tue: string; wed: string; thu: string; fri: string; sat: string; sun: string };
 };

@@ -8,17 +8,25 @@ export default function LoginPage() {
   const router = useRouter();
   const { t } = useApp();
   const [role, setRole] = useState<"admin" | "coach">("admin");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    await fetch("/api/set-role", {
+    setErr(null);
+    const r = await fetch("/api/set-role", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role }),
+      body: JSON.stringify({ role, pin: role === "admin" ? pin : undefined }),
     });
+    const data = await r.json();
     setLoading(false);
+    if (!r.ok) {
+      setErr(data.error ?? "Gagal");
+      return;
+    }
     router.refresh();
     router.push("/jadwal");
   }
@@ -45,6 +53,23 @@ export default function LoginPage() {
             <option value="coach">{t("login.coach")}</option>
           </select>
         </label>
+        {role === "admin" && (
+          <label className="block text-sm">
+            <span className="text-[var(--muted)]">PIN Admin</span>
+            <input
+              type="password"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={8}
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              placeholder="****"
+              className={fieldClass}
+              required
+            />
+          </label>
+        )}
+        {err && <p className="text-sm text-[var(--danger)]">{err}</p>}
         <button
           type="submit"
           disabled={loading}
@@ -53,6 +78,9 @@ export default function LoginPage() {
           {loading ? t("login.saving") : t("login.apply")}
         </button>
       </form>
+      <p className="text-center text-xs text-[var(--muted)]">
+        Pelatih bisa masuk tanpa PIN. Admin butuh PIN.
+      </p>
     </div>
   );
 }

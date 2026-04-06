@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApp } from "@/lib/i18n-context";
 
 type Student = { id: string; name: string; level: number };
@@ -11,6 +11,63 @@ type Pair = {
   studentA: Student;
   studentB: Student;
 };
+
+function LevelBadge({ level }: { level: number }) {
+  const color =
+    level <= 3
+      ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
+      : level <= 6
+        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+        : "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300";
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold leading-5 ${color}`}
+    >
+      L{level}
+    </span>
+  );
+}
+
+function SkeletonRows() {
+  return (
+    <div className="mt-3 space-y-2">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="animate-pulse rounded-xl bg-[var(--bg)]/60 p-4">
+          <div className="flex items-center gap-3">
+            <div className="h-4 w-32 rounded bg-[var(--border)]" />
+            <div className="h-5 w-10 rounded-md bg-[var(--border)]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center gap-3 py-10 text-[var(--muted)]">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="opacity-40"
+      >
+        <circle cx="12" cy="7" r="4" />
+        <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
+        <line x1="20" y1="8" x2="20" y2="14" />
+        <line x1="17" y1="11" x2="23" y2="11" />
+      </svg>
+      <p className="text-sm">{message}</p>
+    </div>
+  );
+}
 
 export function MuridClient({ canEdit }: { canEdit: boolean }) {
   const { t } = useApp();
@@ -27,6 +84,17 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
   const [editName, setEditName] = useState("");
   const [editLevel, setEditLevel] = useState(1);
   const [savingStudentId, setSavingStudentId] = useState<string | null>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [searchQ, setSearchQ] = useState("");
+
+  const filteredStudents = useMemo(
+    () =>
+      searchQ
+        ? students.filter((s) => s.name.toLowerCase().includes(searchQ.toLowerCase()))
+        : students,
+    [students, searchQ],
+  );
 
   const fieldClass =
     "mt-1 w-full min-h-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--text)]";
@@ -45,7 +113,8 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
   }, []);
 
   useEffect(() => {
-    void load();
+    setLoading(true);
+    void load().finally(() => setLoading(false));
   }, [load]);
 
   function startEdit(s: Student) {
@@ -142,77 +211,111 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
 
       <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
         <h2 className="text-base font-semibold">{t("students.listTitle")}</h2>
-        <ul className="mt-3 divide-y divide-[var(--border)]">
-          {students.map((s) => (
-            <li key={s.id} className="py-3 text-sm first:pt-0">
-              {editingId === s.id ? (
-                <div className="space-y-3 rounded-xl bg-[var(--bg)]/50 p-3">
-                  <input
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className={inputClass}
-                    placeholder={t("students.namePlaceholder")}
-                  />
-                  <label className="flex items-center gap-3 text-sm">
-                    <span className="text-[var(--muted)]">{t("students.level")}</span>
+
+        {!loading && students.length > 0 && (
+          <div className="relative mt-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              placeholder={t("students.searchPlaceholder")}
+              className={`${inputClass} pl-9`}
+            />
+          </div>
+        )}
+
+        {loading ? (
+          <SkeletonRows />
+        ) : students.length === 0 ? (
+          <EmptyState message={t("students.emptyList")} />
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {filteredStudents.map((s) => (
+              <li
+                key={s.id}
+                className="rounded-xl border border-[var(--border)] bg-[var(--bg)]/40 px-4 py-3 text-sm transition-colors hover:bg-[var(--bg)]/70"
+              >
+                {editingId === s.id ? (
+                  <div className="space-y-3">
                     <input
-                      type="number"
-                      min={1}
-                      max={9}
-                      value={editLevel}
-                      onChange={(e) => setEditLevel(Number(e.target.value))}
-                      className="h-11 w-20 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className={inputClass}
+                      placeholder={t("students.namePlaceholder")}
                     />
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={savingStudentId === s.id || !editName.trim()}
-                      onClick={() => void saveEdit()}
-                      className="min-h-10 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white disabled:opacity-50"
-                    >
-                      {t("students.save")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={cancelEdit}
-                      className="min-h-10 rounded-xl border border-[var(--border)] px-4 text-sm font-medium"
-                    >
-                      {t("students.cancelEdit")}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex min-h-12 flex-wrap items-center justify-between gap-2">
-                  <span>
-                    {s.name}{" "}
-                    <span className="text-[var(--muted)]">
-                      {t("students.level")} {s.level}
-                    </span>
-                  </span>
-                  {canEdit && (
-                    <div className="flex gap-2">
+                    <label className="flex items-center gap-3 text-sm">
+                      <span className="text-[var(--muted)]">{t("students.level")}</span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={9}
+                        value={editLevel}
+                        onChange={(e) => setEditLevel(Number(e.target.value))}
+                        className="h-11 w-20 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3"
+                      />
+                    </label>
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
-                        className="min-h-10 px-3 text-sm font-semibold text-[var(--accent)]"
-                        onClick={() => startEdit(s)}
+                        disabled={savingStudentId === s.id || !editName.trim()}
+                        onClick={() => void saveEdit()}
+                        className="min-h-10 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white disabled:opacity-50"
                       >
-                        {t("students.edit")}
+                        {t("students.save")}
                       </button>
                       <button
                         type="button"
-                        className="min-h-10 px-3 text-sm font-semibold text-[var(--danger)]"
-                        onClick={() => void delStudent(s.id)}
+                        onClick={cancelEdit}
+                        className="min-h-10 rounded-xl border border-[var(--border)] px-4 text-sm font-medium"
                       >
-                        {t("students.delete")}
+                        {t("students.cancelEdit")}
                       </button>
                     </div>
-                  )}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+                  </div>
+                ) : (
+                  <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
+                    <span className="flex items-center gap-2">
+                      <span className="font-medium">{s.name}</span>
+                      <LevelBadge level={s.level} />
+                    </span>
+                    {canEdit && (
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="min-h-10 px-3 text-sm font-semibold text-[var(--accent)]"
+                          onClick={() => startEdit(s)}
+                        >
+                          {t("students.edit")}
+                        </button>
+                        <button
+                          type="button"
+                          className="min-h-10 px-3 text-sm font-semibold text-[var(--danger)]"
+                          onClick={() => void delStudent(s.id)}
+                        >
+                          {t("students.delete")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {canEdit && (

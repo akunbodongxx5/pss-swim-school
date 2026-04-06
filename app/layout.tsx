@@ -33,6 +33,11 @@ const THEME_BOOT = `
   } catch (e) {}
 })();`;
 
+const SW_REGISTER = `
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const role = (cookies().get("pss_role")?.value === "coach" ? "coach" : "admin") as "admin" | "coach";
 
@@ -40,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="id" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        <script dangerouslySetInnerHTML={{ __html: SW_REGISTER }} />
       </head>
       <body className="min-h-[100dvh] antialiased">
         <AppProviders>

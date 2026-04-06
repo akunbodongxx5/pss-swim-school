@@ -19,6 +19,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
   const [savingId, setSavingId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const [newName, setNewName] = useState("");
   const [newLevels, setNewLevels] = useState<Set<number>>(() => new Set(LEVELS_1_9));
@@ -61,6 +62,10 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
     });
   }
 
+  function toggleExpand(id: string) {
+    setExpandedId((prev) => (prev === id ? null : id));
+  }
+
   async function saveCoach(c: Coach) {
     setErr(null);
     setMsg(null);
@@ -98,6 +103,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
       delete n[c.id];
       return n;
     });
+    setExpandedId(null);
   }
 
   async function deleteCoach(c: Coach) {
@@ -122,6 +128,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
       delete n[c.id];
       return n;
     });
+    setExpandedId(null);
   }
 
   async function addCoach() {
@@ -153,6 +160,8 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
     setNewName("");
     setNewLevels(new Set(LEVELS_1_9));
   }
+
+  const isExpanded = (id: string) => expandedId === id;
 
   return (
     <div className="space-y-4">
@@ -215,25 +224,67 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
         {rows.map((c) => {
           const nm = getName(c);
           const set = getLevelSet(c);
+          const levels = normalizeTeachLevels(c.teachLevels);
+          const expanded = isExpanded(c.id);
+
           return (
             <li
               key={c.id}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
+              className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm"
             >
+              {/* Collapsed header — always visible */}
+              <button
+                type="button"
+                onClick={() => canEdit && toggleExpand(c.id)}
+                className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left ${
+                  canEdit ? "cursor-pointer" : "cursor-default"
+                }`}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-base font-bold text-[var(--accent)]">
+                    {canEdit ? nm : c.name}
+                  </span>
+                </span>
+
+                <span className="flex shrink-0 items-center gap-2">
+                  <span className="flex flex-wrap gap-1">
+                    {levels.map((lv) => (
+                      <span
+                        key={lv}
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)]/15 text-xs font-semibold text-[var(--accent)]"
+                      >
+                        {lv}
+                      </span>
+                    ))}
+                  </span>
+
+                  {canEdit && (
+                    <svg
+                      className={`h-4 w-4 shrink-0 text-[var(--muted)] transition-transform ${expanded ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
+                </span>
+              </button>
+
+              {/* Read-only detail for non-editors */}
               {!canEdit && (
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-lg font-bold text-[var(--accent)]">{c.name}</p>
-                  </div>
-                  <div className="text-right text-sm text-[var(--muted)]">
-                    <span className="block text-xs uppercase tracking-wide">{t("coaches.thLevel")}</span>
-                    <span className="font-semibold text-[var(--text)]">{formatTeachLevels(c.teachLevels)}</span>
-                  </div>
+                <div className="border-t border-[var(--border)] px-4 py-3">
+                  <span className="text-xs uppercase tracking-wide text-[var(--muted)]">{t("coaches.thLevel")}</span>
+                  <span className="ml-2 text-sm font-semibold text-[var(--text)]">
+                    {formatTeachLevels(c.teachLevels)}
+                  </span>
                 </div>
               )}
 
-              {canEdit && (
-                <div className="space-y-3">
+              {/* Expanded edit form */}
+              {canEdit && expanded && (
+                <div className="border-t border-[var(--border)] px-4 pb-4 pt-3 space-y-3">
                   <label className="block text-sm">
                     {t("coaches.thName")}
                     <input

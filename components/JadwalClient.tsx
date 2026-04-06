@@ -28,6 +28,22 @@ type SessionRow = {
   enrollments: { student: Student }[];
 };
 
+/* ── helpers ─────────────────────────────────────────────────── */
+
+const DAY_NAMES_ID = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"] as const;
+const MONTH_NAMES_ID = [
+  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+] as const;
+
+function formatDateId(iso: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d, 12));
+  const dayName = DAY_NAMES_ID[dt.getUTCDay()];
+  const monthName = MONTH_NAMES_ID[m - 1];
+  return `${dayName}, ${d} ${monthName} ${y}`;
+}
+
 function todayIsoWib(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
 }
@@ -49,17 +65,30 @@ function firstAllowedStartHour(iso: string) {
   return a[0] ?? 14;
 }
 
+function occBadgeClass(ratio: number): string {
+  const pct = ratio * 100;
+  if (pct >= 70) return "bg-emerald-500/20 text-emerald-400";
+  if (pct >= 30) return "bg-amber-500/20 text-amber-400";
+  return "bg-red-500/20 text-red-400";
+}
+
+/* ── component ───────────────────────────────────────────────── */
+
 export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   const { t, bundleLabel } = useApp();
+
+  /* range & data */
   const [from, setFrom] = useState(todayIsoWib);
   const [to, setTo] = useState(() => addDaysIso(todayIsoWib(), 13));
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
 
+  /* toast (replaces plain msg / err) */
+  const [toast, setToast] = useState<{ text: string; type: "ok" | "err" } | null>(null);
+
+  /* form */
   const [date, setDate] = useState(todayIsoWib);
   const [hour, setHour] = useState(() => firstAllowedStartHour(todayIsoWib()));
   const [lane, setLane] = useState(1);
@@ -79,6 +108,22 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   const [openTailDraft, setOpenTailDraft] = useState<number[]>([]);
   const [tailSaving, setTailSaving] = useState(false);
 
+  /* search & view mode */
+  const [searchQ, setSearchQ] = useState("");
+  const [viewMode, setViewMode] = useState<"list" | "timetable">("list");
+
+  /* ── toast auto-dismiss ─────────────────────────────────────── */
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(id);
+  }, [toast]);
+
+  function showToast(text: string, type: "ok" | "err") {
+    setToast({ text, type });
+  }
+
+  /* ── undo listener ──────────────────────────────────────────── */
   useEffect(() => {
     function syncUndo() {
       setUndoBlob(readScheduleUndo());
@@ -121,9 +166,10 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     };
   }, [canEdit, scheduleYm?.y, scheduleYm?.m]);
 
+  /* ── data loading ───────────────────────────────────────────── */
   const load = useCallback(async () => {
     setLoading(true);
-    setErr(null);
+    setToast(null);
     try {
       const [c, st, se] = await Promise.all([
         fetch("/api/coaches").then((r) => r.json()),
@@ -136,7 +182,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       setStudents(st);
       setSessions(se);
     } catch {
-      setErr(t("schedule.loadError"));
+      showToast(t("schedule.loadError"), "err");
     } finally {
       setLoading(false);
     }
@@ -146,6 +192,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     void load();
   }, [load]);
 
+  /* ── derived coaches / students ─────────────────────────────── */
   const eligibleCoaches = useMemo(
     () => coaches.filter((c) => coachCanTeachBundle(c.teachLevels, bundle)),
     [coaches, bundle]
@@ -180,11 +227,35 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   const coachCount = coachSecondaryId ? 2 : 1;
   const maxCap = maxStudentsForBundle(bundle, coachCount);
 
+  /* ── filtered sessions (search) ─────────────────────────────── */
+  const filteredSessions = useMemo(() => {
+    if (!searchQ.trim()) return sessions;
+    const q = searchQ.toLowerCase();
+    return sessions.filter((s) => {
+      if (s.coachPrimary.name.toLowerCase().includes(q)) return true;
+      if (s.coachSecondary?.name.toLowerCase().includes(q)) return true;
+      if (s.enrollments.some((e) => e.student.name.toLowerCase().includes(q))) return true;
+      return false;
+    });
+  }, [sessions, searchQ]);
+
+  /* ── timetable grouped data ─────────────────────────────────── */
+  const timetableData = useMemo(() => {
+    const byDate = new Map<string, SessionRow[]>();
+    for (const s of filteredSessions) {
+      const d = s.date.slice(0, 10);
+      if (!byDate.has(d)) byDate.set(d, []);
+      byDate.get(d)!.push(s);
+    }
+    return [...byDate.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [filteredSessions]);
+
+  /* ── actions ────────────────────────────────────────────────── */
   async function loadSuggestions() {
     const r = await fetch(`/api/suggest?bundle=${bundle}&date=${encodeURIComponent(date)}`);
     const data = await r.json();
     if (!r.ok) {
-      setErr(data.error ?? t("schedule.suggestError"));
+      showToast(data.error ?? t("schedule.suggestError"), "err");
       return;
     }
     setSuggestions(data);
@@ -204,14 +275,13 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     setBundle(s.bundle);
     setCoachPrimaryId(s.coachPrimaryId);
     setCoachSecondaryId(s.coachSecondaryId ?? "");
-    const m: Record<string, boolean> = {};
-    for (const e of s.enrollments) m[e.student.id] = true;
-    setPickStudents(m);
+    const mp: Record<string, boolean> = {};
+    for (const e of s.enrollments) mp[e.student.id] = true;
+    setPickStudents(mp);
   }
 
   async function save(confirmConflict?: boolean) {
-    setMsg(null);
-    setErr(null);
+    setToast(null);
     const payload: Record<string, unknown> = {
       date,
       hour,
@@ -238,10 +308,13 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       return;
     }
     if (!r.ok) {
-      setErr((data.messages && data.messages.join("; ")) || data.error || t("schedule.saveError"));
+      showToast(
+        (data.messages && data.messages.join("; ")) || data.error || t("schedule.saveError"),
+        "err",
+      );
       return;
     }
-    setMsg(editingId ? t("schedule.savedUpdated") : t("schedule.savedCreated"));
+    showToast(editingId ? t("schedule.savedUpdated") : t("schedule.savedCreated"), "ok");
     resetForm();
     await load();
   }
@@ -259,10 +332,13 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     const data = await r.json();
     setConflictModal(null);
     if (!r.ok) {
-      setErr((data.messages && data.messages.join("; ")) || data.error || t("schedule.saveError"));
+      showToast(
+        (data.messages && data.messages.join("; ")) || data.error || t("schedule.saveError"),
+        "err",
+      );
       return;
     }
-    setMsg(t("schedule.savedConflict"));
+    showToast(t("schedule.savedConflict"), "ok");
     resetForm();
     await load();
   }
@@ -294,7 +370,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     const b = readScheduleUndo();
     if (!b?.sessions.length) return;
     setUndoBusy(true);
-    setErr(null);
+    setToast(null);
     try {
       const r = await fetch("/api/sessions/restore", {
         method: "POST",
@@ -304,12 +380,12 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       const data = (await r.json()) as { messages?: string[] };
       if (!r.ok) {
         const joined = Array.isArray(data.messages) ? data.messages.join(" ") : "";
-        setErr(joined || t("schedule.undoRestoreFail"));
+        showToast(joined || t("schedule.undoRestoreFail"), "err");
         return;
       }
       removeScheduleUndo();
       setUndoBlob(null);
-      setMsg(t("schedule.undoRestoreOk"));
+      showToast(t("schedule.undoRestoreOk"), "ok");
       await load();
     } finally {
       setUndoBusy(false);
@@ -324,15 +400,15 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   async function handleClearAllJadwal() {
     if (!confirm(t("menu.clearAllScheduleConfirm"))) return;
     setUndoBusy(true);
-    setErr(null);
+    setToast(null);
     try {
       const r = await clearAllSchedulesWithUndo();
       if (!r.ok) {
-        setErr(t("menu.clearAllScheduleFail"));
+        showToast(t("menu.clearAllScheduleFail"), "err");
         return;
       }
       setUndoBlob(readScheduleUndo());
-      setMsg(t("menu.clearAllScheduleDone"));
+      showToast(t("menu.clearAllScheduleDone"), "ok");
       await load();
     } finally {
       setUndoBusy(false);
@@ -348,7 +424,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   async function saveTailConfig() {
     if (!scheduleYm) return;
     setTailSaving(true);
-    setErr(null);
+    setToast(null);
     try {
       const r = await fetch("/api/schedule-month-config", {
         method: "PUT",
@@ -361,24 +437,40 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       });
       const data = (await r.json().catch(() => ({}))) as { error?: string };
       if (!r.ok) {
-        setErr(data.error ?? t("schedule.saveError"));
+        showToast(data.error ?? t("schedule.saveError"), "err");
         return;
       }
-      setMsg(t("schedule.tailSaved"));
+      showToast(t("schedule.tailSaved"), "ok");
     } finally {
       setTailSaving(false);
     }
   }
 
+  /* ── render ─────────────────────────────────────────────────── */
   return (
     <div className="space-y-6">
+      {/* ── Toast notification ──────────────────────────────── */}
+      {toast && (
+        <div
+          style={{ position: "fixed", top: "1rem", left: "1rem", right: "1rem", zIndex: 70 }}
+          className={`mx-auto max-w-lg rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
+            toast.type === "ok"
+              ? "bg-emerald-600 text-white"
+              : "bg-red-600 text-white"
+          }`}
+        >
+          {toast.text}
+        </div>
+      )}
+
       {!canEdit && (
         <p className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted)]">
           {t("schedule.coachReadOnly")}
         </p>
       )}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+      {/* ── Range filters + actions ─────────────────────────── */}
+      <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:flex-wrap sm:items-end">
         <label className="block flex-1 text-sm">
           <span className="text-[var(--muted)]">{t("schedule.from")}</span>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={fieldClass} />
@@ -404,10 +496,18 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
             {t("schedule.clearAllButton")}
           </button>
         )}
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="min-h-11 rounded-xl border border-[var(--border)] px-4 text-sm font-medium active:bg-[var(--border)]/40"
+        >
+          {t("schedule.exportPrint")}
+        </button>
       </div>
 
+      {/* ── Undo banner ─────────────────────────────────────── */}
       {canEdit && undoBlob && undoBlob.sessions.length > 0 && (
-        <div className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm dark:bg-amber-500/15">
+        <div className="rounded-2xl border border-amber-500/35 bg-amber-500/10 px-4 py-3 text-sm print:hidden dark:bg-amber-500/15">
           <p className="text-[var(--text)]">
             {t("schedule.undoBanner", { count: undoBlob.sessions.length })}
           </p>
@@ -432,12 +532,11 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
         </div>
       )}
 
-      {msg && <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{msg}</p>}
-      {err && <p className="text-sm text-[var(--danger)]">{err}</p>}
       {loading && <p className="text-sm text-[var(--muted)]">{t("schedule.loading")}</p>}
 
+      {/* ── Form (editor) ───────────────────────────────────── */}
       {canEdit && (
-        <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
+        <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm print:hidden">
           <h2 className="text-base font-semibold">{editingId ? t("schedule.editSession") : t("schedule.addSession")}</h2>
           <div className="grid gap-4">
             <label className="block text-sm">
@@ -622,67 +721,182 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
         </section>
       )}
 
-      <section className="space-y-3">
-        <h2 className="text-base font-semibold">{t("schedule.sessionList")}</h2>
-        <ul className="space-y-3">
-          {sessions.map((s) => {
-            const cc = s.coachSecondaryId ? 2 : 1;
-            const max = maxStudentsForBundle(s.bundle, cc);
-            const occ = occupancyRatio(s.enrollments.length, max);
-            return (
-              <li
-                key={s.id}
-                className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <p className="text-lg font-bold text-[var(--accent)]">
-                      {s.date.slice(0, 10)} · {s.hour}:00
-                    </p>
-                    <p className="text-sm text-[var(--muted)]">
-                      {t("schedule.thLane")} {s.lane} · {bundleLabel(s.bundle)}
-                    </p>
+      {/* ── Search bar + view toggle ────────────────────────── */}
+      <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:items-center">
+        <input
+          type="text"
+          value={searchQ}
+          onChange={(e) => setSearchQ(e.target.value)}
+          placeholder={t("schedule.searchPlaceholder")}
+          className={`${fieldClass} mt-0 flex-1`}
+        />
+        <div className="flex gap-1 rounded-xl border border-[var(--border)] p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              viewMode === "list"
+                ? "bg-[var(--accent)] text-white"
+                : "text-[var(--muted)] hover:text-[var(--text)]"
+            }`}
+          >
+            {t("schedule.listView")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("timetable")}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              viewMode === "timetable"
+                ? "bg-[var(--accent)] text-white"
+                : "text-[var(--muted)] hover:text-[var(--text)]"
+            }`}
+          >
+            {t("schedule.timetableView")}
+          </button>
+        </div>
+      </div>
+
+      {/* ── List view ───────────────────────────────────────── */}
+      {viewMode === "list" && (
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold">{t("schedule.sessionList")}</h2>
+          <ul className="space-y-3">
+            {filteredSessions.map((s) => {
+              const cc = s.coachSecondaryId ? 2 : 1;
+              const max = maxStudentsForBundle(s.bundle, cc);
+              const occ = occupancyRatio(s.enrollments.length, max);
+              return (
+                <li
+                  key={s.id}
+                  className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-lg font-bold text-[var(--accent)]">
+                        {formatDateId(s.date.slice(0, 10))} · {s.hour}:00
+                      </p>
+                      <p className="text-sm text-[var(--muted)]">
+                        {t("schedule.thLane")} {s.lane} · {bundleLabel(s.bundle)}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${occBadgeClass(occ)}`}
+                    >
+                      {s.enrollments.length}/{max} ({(occ * 100).toFixed(0)}%)
+                    </span>
                   </div>
-                  <p className="rounded-full bg-[var(--border)]/40 px-3 py-1 text-xs font-semibold">
-                    {s.enrollments.length}/{max} ({(occ * 100).toFixed(0)}%)
+                  <p className="mt-2 text-sm">
+                    <span className="text-[var(--muted)]">{t("schedule.thCoaches")}: </span>
+                    {s.coachPrimary.name}
+                    {s.coachSecondary ? ` + ${s.coachSecondary.name}` : ""}
                   </p>
+                  <p className="mt-1 text-sm">
+                    <span className="text-[var(--muted)]">{t("schedule.thStudents")}: </span>
+                    {s.enrollments.map((e) => e.student.name).join(", ") || "—"}
+                  </p>
+                  {canEdit && (
+                    <div className="mt-3 flex gap-4 border-t border-[var(--border)] pt-3 print:hidden">
+                      <button
+                        type="button"
+                        className="min-h-10 text-sm font-semibold text-[var(--accent)]"
+                        onClick={() => fillForm(s)}
+                      >
+                        {t("schedule.edit")}
+                      </button>
+                      <button
+                        type="button"
+                        className="min-h-10 text-sm font-semibold text-[var(--danger)]"
+                        onClick={() => void remove(s.id)}
+                      >
+                        {t("schedule.delete")}
+                      </button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          {filteredSessions.length === 0 && !loading && (
+            <p className="py-8 text-center text-sm text-[var(--muted)]">{t("schedule.noSessions")}</p>
+          )}
+        </section>
+      )}
+
+      {/* ── Timetable view ──────────────────────────────────── */}
+      {viewMode === "timetable" && (
+        <section className="space-y-6">
+          <h2 className="text-base font-semibold">{t("schedule.sessionList")}</h2>
+          {timetableData.map(([dateStr, dateSessions]) => {
+            const hours = [...new Set(dateSessions.map((s) => s.hour))].sort((a, b) => a - b);
+            const lanes = [1, 2, 3, 4];
+            return (
+              <div key={dateStr}>
+                <h3 className="mb-2 text-sm font-bold text-[var(--accent)]">
+                  {formatDateId(dateStr)}
+                </h3>
+                <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="bg-[var(--surface)]">
+                        <th className="border-b border-[var(--border)] px-3 py-2 text-left font-semibold">
+                          {t("schedule.startHour")}
+                        </th>
+                        {lanes.map((l) => (
+                          <th
+                            key={l}
+                            className="border-b border-[var(--border)] px-3 py-2 text-left font-semibold"
+                          >
+                            {t("schedule.thLane")} {l}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {hours.map((h) => (
+                        <tr key={h} className="border-b border-[var(--border)] last:border-b-0">
+                          <td className="px-3 py-2 font-medium">{h}:00</td>
+                          {lanes.map((l) => {
+                            const cell = dateSessions.find((s) => s.hour === h && s.lane === l);
+                            if (!cell) {
+                              return (
+                                <td key={l} className="px-3 py-2 text-[var(--muted)]">
+                                  —
+                                </td>
+                              );
+                            }
+                            const cc = cell.coachSecondaryId ? 2 : 1;
+                            const mx = maxStudentsForBundle(cell.bundle, cc);
+                            const oc = occupancyRatio(cell.enrollments.length, mx);
+                            return (
+                              <td key={l} className="px-3 py-2">
+                                <p className="font-medium">{bundleLabel(cell.bundle)}</p>
+                                <p className="text-xs text-[var(--muted)]">
+                                  {cell.coachPrimary.name}
+                                  {cell.coachSecondary ? ` + ${cell.coachSecondary.name}` : ""}
+                                </p>
+                                <span
+                                  className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${occBadgeClass(oc)}`}
+                                >
+                                  {cell.enrollments.length}/{mx}
+                                </span>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <p className="mt-2 text-sm">
-                  <span className="text-[var(--muted)]">{t("schedule.thCoaches")}: </span>
-                  {s.coachPrimary.name}
-                  {s.coachSecondary ? ` + ${s.coachSecondary.name}` : ""}
-                </p>
-                <p className="mt-1 text-sm">
-                  <span className="text-[var(--muted)]">{t("schedule.thStudents")}: </span>
-                  {s.enrollments.map((e) => e.student.name).join(", ") || "—"}
-                </p>
-                {canEdit && (
-                  <div className="mt-3 flex gap-4 border-t border-[var(--border)] pt-3">
-                    <button
-                      type="button"
-                      className="min-h-10 text-sm font-semibold text-[var(--accent)]"
-                      onClick={() => fillForm(s)}
-                    >
-                      {t("schedule.edit")}
-                    </button>
-                    <button
-                      type="button"
-                      className="min-h-10 text-sm font-semibold text-[var(--danger)]"
-                      onClick={() => void remove(s.id)}
-                    >
-                      {t("schedule.delete")}
-                    </button>
-                  </div>
-                )}
-              </li>
+              </div>
             );
           })}
-        </ul>
-        {sessions.length === 0 && !loading && (
-          <p className="py-8 text-center text-sm text-[var(--muted)]">{t("schedule.noSessions")}</p>
-        )}
-      </section>
+          {timetableData.length === 0 && !loading && (
+            <p className="py-8 text-center text-sm text-[var(--muted)]">{t("schedule.noSessions")}</p>
+          )}
+        </section>
+      )}
 
+      {/* ── Conflict modal ──────────────────────────────────── */}
       {conflictModal && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-4 sm:items-center">
           <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-xl">
