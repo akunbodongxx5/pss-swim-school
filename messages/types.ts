@@ -157,6 +157,7 @@ export type MessageTree = {
       forbidden: string;
       generic: string;
       server_error: string;
+      bad_response: string;
     };
   };
   waitlist: {

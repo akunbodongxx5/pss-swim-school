@@ -159,6 +159,7 @@ const en: MessageTree = {
       forbidden: "Only admins can change school settings.",
       generic: "Could not save. Try again.",
       server_error: "Server error. Check database connection or server logs.",
+      bad_response: "Invalid server response (not JSON). Check Vercel logs or request body size.",
     },
   },
   waitlist: {

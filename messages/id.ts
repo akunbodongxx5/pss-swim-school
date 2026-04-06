@@ -159,6 +159,7 @@ const id: MessageTree = {
       forbidden: "Hanya admin yang bisa mengubah pengaturan sekolah.",
       generic: "Gagal menyimpan. Coba lagi.",
       server_error: "Server error. Cek koneksi database atau log server.",
+      bad_response: "Respons server tidak valid (bukan JSON). Cek log Vercel atau ukuran body.",
     },
   },
   waitlist: {

@@ -5,6 +5,8 @@ import { ensureSchoolBrandingRow, getSchoolBranding } from "@/lib/school-brandin
 import { validateLogoDataUrl, validateSchoolName } from "@/lib/school-branding-validate";
 import { prisma } from "@/lib/prisma";
 
+export const runtime = "nodejs";
+
 export async function GET() {
   try {
     await ensureSchoolBrandingRow();
@@ -74,7 +76,11 @@ export async function PUT(req: Request) {
       update: { schoolName: nameResult, logoDataUrl: logoResolved as string | null },
     });
 
-    revalidatePath("/", "layout");
+    try {
+      revalidatePath("/", "layout");
+    } catch (revErr) {
+      console.error("[school-branding PUT] revalidatePath", revErr);
+    }
 
     const b = await getSchoolBranding();
     return NextResponse.json(b);

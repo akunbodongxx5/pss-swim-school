@@ -53,17 +53,24 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
         body: JSON.stringify({ schoolName, logoDataUrl }),
       });
 
+      const raw = await res.text();
       let data: { error?: string } = {};
-      try {
-        const raw = await res.text();
-        if (raw) data = JSON.parse(raw) as { error?: string };
-      } catch {
-        setMessage({ kind: "err", text: m.settings.errors.generic });
-        return;
+      if (raw) {
+        try {
+          data = JSON.parse(raw) as { error?: string };
+        } catch {
+          const text =
+            res.status >= 500
+              ? m.settings.errors.server_error
+              : m.settings.errors.bad_response;
+          setMessage({ kind: "err", text });
+          return;
+        }
       }
 
       if (!res.ok) {
-        const code = data.error;
+        let code = data.error;
+        if (!code && res.status >= 500) code = "server_error";
         const text =
           code && code in m.settings.errors
             ? m.settings.errors[code as keyof typeof m.settings.errors]
