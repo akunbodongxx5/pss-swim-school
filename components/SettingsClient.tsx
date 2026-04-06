@@ -49,9 +49,19 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
       const res = await fetch("/api/school-branding", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
         body: JSON.stringify({ schoolName, logoDataUrl }),
       });
-      const data = (await res.json()) as { error?: string };
+
+      let data: { error?: string } = {};
+      try {
+        const raw = await res.text();
+        if (raw) data = JSON.parse(raw) as { error?: string };
+      } catch {
+        setMessage({ kind: "err", text: m.settings.errors.generic });
+        return;
+      }
+
       if (!res.ok) {
         const code = data.error;
         const text =
@@ -64,6 +74,8 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
       setMessage({ kind: "ok", text: m.settings.saved });
       await refreshBranding();
       router.refresh();
+    } catch {
+      setMessage({ kind: "err", text: m.settings.errors.generic });
     } finally {
       setSaving(false);
     }
