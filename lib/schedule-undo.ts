@@ -31,7 +31,7 @@ export function parseScheduleUndo(raw: string | null): ScheduleUndoBlob | null {
 /** Map response GET /api/sessions ke payload undo (tanggal kalender WIB). */
 export function sessionsResponseToUndoPayload(sessions: unknown[]): UndoSessionPayload[] {
   if (!Array.isArray(sessions)) return [];
-  return sessions.map((row: Record<string, unknown>) => ({
+  return (sessions as Record<string, unknown>[]).map((row) => ({
     date: new Date(String(row.date)).toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" }),
     hour: Number(row.hour),
     lane: Number(row.lane),
