@@ -137,7 +137,8 @@ const en: MessageTree = {
     emptyList: "No students yet. Add one below.",
   },
   settings: {
-    intro: "Name and logo appear in the header, browser tab title, and PWA. Only admins can edit.",
+    intro:
+      "Name and logo appear in the header, browser tab, and Add to Home Screen (PWA) icon. Upload a square PNG or JPEG for a crisp phone icon. Only admins can edit.",
     schoolNameLabel: "Swim school name",
     schoolNameHint: "Shown in the header and app title.",
     logoLabel: "Logo",

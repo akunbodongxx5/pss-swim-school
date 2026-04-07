@@ -16,6 +16,13 @@ export async function generateMetadata(): Promise<Metadata> {
     description: `Jadwal, murid, dan pelatih — ${b.schoolName}`,
     appleWebApp: { capable: true, title: appleShort, statusBarStyle: "default" },
     formatDetection: { telephone: false },
+    icons: {
+      icon: [
+        { url: "/api/branding-icon", sizes: "192x192", type: "image/png" },
+        { url: "/api/branding-icon", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/api/branding-icon", sizes: "180x180", type: "image/png" }],
+    },
   };
 }
 

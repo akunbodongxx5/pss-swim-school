@@ -137,7 +137,8 @@ const id: MessageTree = {
     emptyList: "Belum ada murid. Tambahkan di bawah.",
   },
   settings: {
-    intro: "Nama dan logo dipakai di header, judul tab, dan PWA. Hanya admin yang bisa mengubah.",
+    intro:
+      "Nama dan logo dipakai di header, judul tab, dan ikon \u201cTambahkan ke layar utama\u201d (PWA). Unggah logo persegi PNG/JPEG (disarankan) supaya ikon di HP jelas. Hanya admin yang bisa mengubah.",
     schoolNameLabel: "Nama sekolah renang",
     schoolNameHint: "Tampil di header dan judul aplikasi.",
     logoLabel: "Logo",
