@@ -72,6 +72,14 @@ function occBadgeClass(ratio: number): string {
   return "bg-red-500/20 text-red-400";
 }
 
+function scrollToSessionEditor() {
+  if (typeof document === "undefined") return;
+  const el = document.getElementById("pss-session-editor");
+  if (!el) return;
+  const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+  el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+}
+
 /* ── component ───────────────────────────────────────────────── */
 
 export function JadwalClient({ canEdit }: { canEdit: boolean }) {
@@ -278,6 +286,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     const mp: Record<string, boolean> = {};
     for (const e of s.enrollments) mp[e.student.id] = true;
     setPickStudents(mp);
+    requestAnimationFrame(() => scrollToSessionEditor());
   }
 
   async function save(confirmConflict?: boolean) {
@@ -536,7 +545,11 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
 
       {/* ── Form (editor) ───────────────────────────────────── */}
       {canEdit && (
-        <section className="space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm print:hidden">
+        <section
+          id="pss-session-editor"
+          tabIndex={-1}
+          className="space-y-4 scroll-mt-20 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm print:hidden"
+        >
           <h2 className="text-base font-semibold">{editingId ? t("schedule.editSession") : t("schedule.addSession")}</h2>
           <div className="grid gap-4">
             <label className="block text-sm">
@@ -880,6 +893,15 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                                 >
                                   {cell.enrollments.length}/{mx}
                                 </span>
+                                {canEdit && (
+                                  <button
+                                    type="button"
+                                    className="mt-2 block text-left text-xs font-semibold text-[var(--accent)] active:underline"
+                                    onClick={() => fillForm(cell)}
+                                  >
+                                    {t("schedule.edit")}
+                                  </button>
+                                )}
                               </td>
                             );
                           })}

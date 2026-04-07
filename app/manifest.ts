@@ -1,11 +1,10 @@
 import type { MetadataRoute } from "next";
-import { ensureSchoolBrandingRow, getSchoolBranding } from "@/lib/school-branding-server";
+import { getSchoolBrandingMeta } from "@/lib/school-branding-server";
 
 export const dynamic = "force-dynamic";
 
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
-  await ensureSchoolBrandingRow();
-  const b = await getSchoolBranding();
+  const b = await getSchoolBrandingMeta();
   const short = b.schoolName.length > 12 ? `${b.schoolName.slice(0, 11)}…` : b.schoolName;
   return {
     name: b.schoolName,

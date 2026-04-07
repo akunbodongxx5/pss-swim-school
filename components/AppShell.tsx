@@ -149,6 +149,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
               <Link
                 key={href}
                 href={href}
+                prefetch={false}
                 className={`pss-nav-tab flex min-h-[3.25rem] min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[10px] font-medium ${
                   active ? "text-[var(--accent)]" : "text-[var(--muted)]"
                 }`}
@@ -187,6 +188,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
             <div className="space-y-1 p-3">
               <Link
                 href="/"
+                prefetch={false}
                 onClick={() => setMenuOpen(false)}
                 className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
               >
@@ -194,6 +196,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
               </Link>
               <Link
                 href="/waitlist"
+                prefetch={false}
                 onClick={() => setMenuOpen(false)}
                 className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
               >
@@ -201,6 +204,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
               </Link>
               <Link
                 href="/settings"
+                prefetch={false}
                 onClick={() => setMenuOpen(false)}
                 className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
               >
@@ -208,6 +212,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
               </Link>
               <Link
                 href="/login"
+                prefetch={false}
                 onClick={() => setMenuOpen(false)}
                 className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
               >

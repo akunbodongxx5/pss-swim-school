@@ -10,7 +10,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await ensureSchoolBrandingRow();
     const b = await getSchoolBranding();
     return NextResponse.json(b);
   } catch (e) {

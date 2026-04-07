@@ -4,13 +4,12 @@ import "./globals.css";
 import { BrandingProvider } from "@/lib/branding-context";
 import { AppProviders } from "@/lib/i18n-context";
 import { AppShell } from "@/components/AppShell";
-import { ensureSchoolBrandingRow, getSchoolBranding } from "@/lib/school-branding-server";
+import { getSchoolBranding, getSchoolBrandingMeta } from "@/lib/school-branding-server";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
-  await ensureSchoolBrandingRow();
-  const b = await getSchoolBranding();
+  const b = await getSchoolBrandingMeta();
   const appleShort = b.schoolName.length > 17 ? `${b.schoolName.slice(0, 16)}…` : b.schoolName;
   return {
     title: { default: b.schoolName, template: `%s | ${b.schoolName}` },
@@ -48,7 +47,6 @@ if('serviceWorker' in navigator){
 }`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  await ensureSchoolBrandingRow();
   const branding = await getSchoolBranding();
   const role = (cookies().get("pss_role")?.value === "coach" ? "coach" : "admin") as "admin" | "coach";
 
