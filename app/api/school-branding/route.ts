@@ -70,10 +70,15 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: logoResolved.error }, { status: 400 });
     }
 
+    const logoChanged = logoResolved !== existingLogo;
     await prisma.schoolBranding.upsert({
       where: { id: 1 },
       create: { id: 1, schoolName: nameResult, logoDataUrl: logoResolved as string | null },
-      update: { schoolName: nameResult, logoDataUrl: logoResolved as string | null },
+      update: {
+        schoolName: nameResult,
+        logoDataUrl: logoResolved as string | null,
+        ...(logoChanged ? { logoVersion: { increment: 1 } } : {}),
+      },
     });
 
     try {

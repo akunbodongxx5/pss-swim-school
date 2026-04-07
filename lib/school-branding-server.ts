@@ -17,14 +17,14 @@ export const ensureSchoolBrandingRow = cache(async function ensureSchoolBranding
   });
 });
 
-/** Hanya nama — untuk metadata/manifest tanpa memuat kolom logo (besar) dari DB. */
-export const getSchoolBrandingMeta = cache(async function getSchoolBrandingMeta(): Promise<{ schoolName: string }> {
+/** Hanya nama + logoVersion — untuk metadata/manifest tanpa memuat kolom logo (besar) dari DB. */
+export const getSchoolBrandingMeta = cache(async function getSchoolBrandingMeta(): Promise<{ schoolName: string; logoVersion: number }> {
   await ensureSchoolBrandingRow();
   const row = await prisma.schoolBranding.findUnique({
     where: { id: 1 },
-    select: { schoolName: true },
+    select: { schoolName: true, logoVersion: true },
   });
-  return { schoolName: row?.schoolName?.trim() || DEFAULT_NAME };
+  return { schoolName: row?.schoolName?.trim() || DEFAULT_NAME, logoVersion: row?.logoVersion ?? 1 };
 });
 
 export const getSchoolBranding = cache(async function getSchoolBranding(): Promise<SchoolBrandingDTO> {

@@ -21,6 +21,8 @@ model SchoolBranding {
   schoolName  String  @default("Swim School")
   /// data:image/...;base64,... atau SVG UTF-8 — null = tanpa logo
   logoDataUrl String? @db.Text
+  /// Increment setiap kali logo berubah — dipakai sebagai cache-buster di manifest PWA
+  logoVersion Int     @default(1)
 }
 
 model Coach {
