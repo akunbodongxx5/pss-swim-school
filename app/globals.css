@@ -241,7 +241,74 @@ input[type="checkbox"] {
   animation: pss-nav-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
 }
 
+@keyframes pss-splash-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pss-splash-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 10px 24px rgb(37 99 235 / 0.14));
+  }
+  50% {
+    transform: scale(1.03);
+    filter: drop-shadow(0 14px 32px rgb(37 99 235 / 0.2));
+  }
+}
+
+@keyframes pss-splash-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.88);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pss-splash-root {
+  animation: pss-splash-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.pss-splash-logo-wrap {
+  animation: pss-splash-breathe 2.8s ease-in-out infinite;
+}
+
+.pss-splash-dot {
+  animation: pss-splash-dot 1.15s ease-in-out infinite;
+}
+
+.pss-splash-dot:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.pss-splash-dot:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .pss-splash-root,
+  .pss-splash-logo-wrap,
+  .pss-splash-dot {
+    animation: none !important;
+  }
+
+  .pss-splash-root {
+    opacity: 1;
+    transform: none;
+  }
+
   .pss-animate-fade-in,
   .pss-animate-fade-in-up,
   .pss-animate-page,

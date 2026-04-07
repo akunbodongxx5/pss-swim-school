@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getSchoolBrandingMeta } from "@/lib/school-branding-server";
+import { pwaSplashBackgroundHex } from "@/lib/pwa-splash";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,7 @@ function shortNameForLauncher(name: string, max = 12): string {
 export default async function manifest(): Promise<MetadataRoute.Manifest> {
   const b = await getSchoolBrandingMeta();
   const short = shortNameForLauncher(b.schoolName);
+  const splashBg = pwaSplashBackgroundHex();
   return {
     name: b.schoolName,
     short_name: short,
@@ -34,7 +36,7 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     start_url: "/jadwal",
     display: "standalone",
     orientation: "portrait-primary",
-    background_color: "#0c1222",
+    background_color: splashBg,
     theme_color: "#2563eb",
     icons: [
       {
