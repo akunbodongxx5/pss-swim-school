@@ -13,7 +13,7 @@ export async function GET(req: Request) {
   if (b.logoDataUrl) {
     const parsed = dataUrlToImageBuffer(b.logoDataUrl);
     if (parsed && isSupportedPwaImageMime(parsed.contentType)) {
-      return new NextResponse(parsed.buffer, {
+      return new NextResponse(new Uint8Array(parsed.buffer), {
         status: 200,
         headers: {
           "Content-Type": parsed.contentType,
