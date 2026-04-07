@@ -18,10 +18,24 @@ export async function generateMetadata(): Promise<Metadata> {
     formatDetection: { telephone: false },
     icons: {
       icon: [
-        { url: "/api/branding-icon", sizes: "192x192", type: "image/png" },
-        { url: "/api/branding-icon", sizes: "512x512", type: "image/png" },
+        {
+          url: `/api/branding-icon?size=192&v=${b.logoVersion}`,
+          sizes: "192x192",
+          type: "image/png",
+        },
+        {
+          url: `/api/branding-icon?size=512&v=${b.logoVersion}`,
+          sizes: "512x512",
+          type: "image/png",
+        },
       ],
-      apple: [{ url: "/api/branding-icon", sizes: "180x180", type: "image/png" }],
+      apple: [
+        {
+          url: `/api/branding-icon?size=180&v=${b.logoVersion}`,
+          sizes: "180x180",
+          type: "image/png",
+        },
+      ],
     },
   };
 }

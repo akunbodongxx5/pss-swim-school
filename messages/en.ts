@@ -138,7 +138,7 @@ const en: MessageTree = {
   },
   settings: {
     intro:
-      "Name and logo appear in the header, browser tab, and Add to Home Screen (PWA) icon. Upload a square PNG or JPEG for a crisp phone icon. Only admins can edit.",
+      "Name and logo appear in the header, browser tab, and Add to Home Screen (PWA) icon. Your logo is auto-fitted to a square with a light background and safe padding for phone launchers. PNG or JPEG recommended. Set PWA_ICON_BACKGROUND (#rrggbb) on the server to change the icon backdrop. Only admins can edit.",
     schoolNameLabel: "Swim school name",
     schoolNameHint: "Shown in the header and app title.",
     logoLabel: "Logo",
