@@ -3,6 +3,7 @@ import { dataUrlToImageBuffer, isSupportedPwaImageMime } from "@/lib/data-url-bu
 import { getSchoolBranding } from "@/lib/school-branding-server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 /**
  * Ikon PWA / apple-touch-icon: pakai logo sekolah (PNG/JPEG/WebP/SVG) kalau ada,
