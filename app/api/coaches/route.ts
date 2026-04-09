@@ -1,6 +1,11 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { normalizeTeachLevels, serializeTeachLevels } from "@/lib/domain";
+import {
+  disjointTraineeFromLead,
+  normalizeTeachLevels,
+  serializeTeachLevels,
+  serializeTraineeLevels,
+} from "@/lib/domain";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -14,7 +19,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Hanya admin." }, { status: 403 });
   }
 
-  const body = (await req.json()) as { name?: string; teachLevels?: unknown };
+  const body = (await req.json()) as { name?: string; teachLevels?: unknown; traineeLevels?: unknown };
   const name = body.name?.trim();
   if (!name) {
     return NextResponse.json({ error: "Nama wajib." }, { status: 400 });
@@ -24,10 +29,15 @@ export async function POST(req: Request) {
   if (teachLevels.length === 0) {
     teachLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   }
+  const traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels(body.traineeLevels));
 
   const created = await prisma.coach
     .create({
-      data: { name, teachLevels: serializeTeachLevels(teachLevels) },
+      data: {
+        name,
+        teachLevels: serializeTeachLevels(teachLevels),
+        traineeLevels: serializeTraineeLevels(traineeLevels),
+      },
     })
     .catch(() => null);
 
@@ -49,8 +59,13 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Parameter id wajib." }, { status: 400 });
   }
 
-  const body = (await req.json()) as { teachLevels?: unknown; name?: string };
-  const data: { teachLevels?: string; name?: string } = {};
+  const existing = await prisma.coach.findUnique({ where: { id } });
+  if (!existing) {
+    return NextResponse.json({ error: "Pelatih tidak ditemukan." }, { status: 404 });
+  }
+
+  const body = (await req.json()) as { teachLevels?: unknown; traineeLevels?: unknown; name?: string };
+  const data: { teachLevels?: string; traineeLevels?: string; name?: string } = {};
 
   if (body.name !== undefined) {
     const n = body.name.trim();
@@ -58,12 +73,29 @@ export async function PATCH(req: Request) {
     data.name = n;
   }
 
+  let teachLevels = normalizeTeachLevels(existing.teachLevels);
   if (body.teachLevels !== undefined) {
-    const teachLevels = normalizeTeachLevels(body.teachLevels);
+    teachLevels = normalizeTeachLevels(body.teachLevels);
     if (teachLevels.length === 0) {
       return NextResponse.json({ error: "Pilih minimal satu level (1–9)." }, { status: 400 });
     }
+  }
+
+  /** Trainee dari body jika ada; kalau lead berubah tanpa trainee di body, disjoint trainee lama ke lead baru. */
+  let traineeLevels: number[];
+  if (body.traineeLevels !== undefined) {
+    traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels(body.traineeLevels));
+  } else if (body.teachLevels !== undefined) {
+    traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels(existing.traineeLevels));
+  } else {
+    traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels(existing.traineeLevels));
+  }
+
+  if (body.teachLevels !== undefined) {
     data.teachLevels = serializeTeachLevels(teachLevels);
+  }
+  if (body.traineeLevels !== undefined || body.teachLevels !== undefined) {
+    data.traineeLevels = serializeTraineeLevels(traineeLevels);
   }
 
   if (Object.keys(data).length === 0) {

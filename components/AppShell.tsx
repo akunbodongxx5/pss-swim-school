@@ -97,7 +97,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
         className="mx-auto w-full max-w-lg flex-1 px-4 pb-28 pt-4"
         style={{ paddingBottom: "max(7rem, calc(5.5rem + env(safe-area-inset-bottom)))" }}
       >
-        <div key={pathname} className="pss-animate-page">
+        <div key={pathname}>
           {children}
         </div>
       </main>

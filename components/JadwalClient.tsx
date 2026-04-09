@@ -15,7 +15,12 @@ import {
   Sparkles,
   Trash2,
 } from "lucide-react";
-import { coachCanTeachBundle, maxStudentsForBundle, occupancyRatio } from "@/lib/domain";
+import {
+  coachCanAssistBundle,
+  coachCanTeachBundle,
+  maxStudentsForBundle,
+  occupancyRatio,
+} from "@/lib/domain";
 import { useApp } from "@/lib/i18n-context";
 import { tailDayOptionsForMonth } from "@/lib/calendar-month-rules";
 import { sessionStartHoursForWibCalendarDate } from "@/lib/operating-hours";
@@ -26,7 +31,7 @@ import {
   type ScheduleUndoBlob,
 } from "@/lib/schedule-undo";
 
-type Coach = { id: string; name: string; teachLevels: unknown };
+type Coach = { id: string; name: string; teachLevels: unknown; traineeLevels?: unknown };
 type Student = { id: string; name: string; level: number };
 type SessionRow = {
   id: string;
@@ -91,6 +96,14 @@ function scrollToSessionEditor() {
   if (!el) return;
   const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
   el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+}
+
+/** Pelatih kedua hanya lolos lewat level trainee (bukan lead) untuk bundle ini. */
+function secondaryIsTraineeOnly(c: Coach, bundle: LevelBundle): boolean {
+  return (
+    coachCanAssistBundle(c.teachLevels, c.traineeLevels, bundle) &&
+    !coachCanTeachBundle(c.teachLevels, bundle)
+  );
 }
 
 /* ── component ───────────────────────────────────────────────── */
@@ -220,8 +233,12 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   );
 
   const secondaryOptions = useMemo(
-    () => eligibleCoaches.filter((c) => c.id !== coachPrimaryId),
-    [eligibleCoaches, coachPrimaryId]
+    () =>
+      coaches.filter(
+        (c) =>
+          c.id !== coachPrimaryId && coachCanAssistBundle(c.teachLevels, c.traineeLevels, bundle)
+      ),
+    [coaches, coachPrimaryId, bundle]
   );
 
   useEffect(() => {
@@ -234,11 +251,13 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   useEffect(() => {
     setCoachSecondaryId((prev) => {
       if (!prev) return "";
-      if (!eligibleCoaches.some((c) => c.id === prev)) return "";
+      if (!coaches.some((c) => c.id === prev)) return "";
       if (prev === coachPrimaryId) return "";
+      const c = coaches.find((x) => x.id === prev);
+      if (c && !coachCanAssistBundle(c.teachLevels, c.traineeLevels, bundle)) return "";
       return prev;
     });
-  }, [eligibleCoaches, coachPrimaryId]);
+  }, [coaches, coachPrimaryId, bundle]);
 
   const studentIds = useMemo(
     () => Object.entries(pickStudents).filter(([, v]) => v).map(([k]) => k),
@@ -685,6 +704,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                 ))}
               </select>
             </label>
+            <p className="text-xs text-[var(--muted)]">{t("schedule.coachSecondaryHint")}</p>
           </div>
           <div>
             <p className="text-sm text-[var(--muted)]">
@@ -841,7 +861,13 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                   <p className="mt-2 text-sm">
                     <span className="text-[var(--muted)]">{t("schedule.thCoaches")}: </span>
                     {s.coachPrimary.name}
-                    {s.coachSecondary ? ` + ${s.coachSecondary.name}` : ""}
+                    {s.coachSecondary
+                      ? ` + ${s.coachSecondary.name}${
+                          secondaryIsTraineeOnly(s.coachSecondary, s.bundle)
+                            ? ` (${t("schedule.traineeTag")})`
+                            : ""
+                        }`
+                      : ""}
                   </p>
                   <p className="mt-1 text-sm">
                     <span className="text-[var(--muted)]">{t("schedule.thStudents")}: </span>
@@ -928,7 +954,13 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                                 <p className="font-medium">{bundleLabel(cell.bundle)}</p>
                                 <p className="text-xs text-[var(--muted)]">
                                   {cell.coachPrimary.name}
-                                  {cell.coachSecondary ? ` + ${cell.coachSecondary.name}` : ""}
+                                  {cell.coachSecondary
+                                    ? ` + ${cell.coachSecondary.name}${
+                                        secondaryIsTraineeOnly(cell.coachSecondary, cell.bundle)
+                                          ? ` (${t("schedule.traineeTag")})`
+                                          : ""
+                                      }`
+                                    : ""}
                                 </p>
                                 <span
                                   className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${occBadgeClass(oc)}`}

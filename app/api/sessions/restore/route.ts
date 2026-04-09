@@ -39,13 +39,14 @@ export async function POST(req: Request) {
         const date = calendarDateFromIso(s.date);
         const bundle = s.bundle as LevelBundle;
         const studentIds = s.studentIds ?? [];
+        const secId = s.coachSecondaryId ?? null;
         const val = await validateScheduledSession(txDb, {
           date,
           hour: s.hour,
           lane: s.lane,
           bundle,
           coachPrimaryId: s.coachPrimaryId,
-          coachSecondaryId: s.coachSecondaryId ?? null,
+          coachSecondaryId: secId,
           enrollmentStudentIds: studentIds,
         });
         if (val.length) {
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
             lane: s.lane,
             bundle,
             coachPrimaryId: s.coachPrimaryId,
-            coachSecondaryId: s.coachSecondaryId ?? null,
+            coachSecondaryId: secId,
             enrollments: {
               create: studentIds.map((studentId) => ({ studentId })),
             },

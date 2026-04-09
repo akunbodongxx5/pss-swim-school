@@ -5,16 +5,16 @@
 export function LoadingSplash({ backgroundHex }: { backgroundHex: string }) {
   return (
     <div
-      className="pss-splash-root fixed inset-0 z-[100] flex flex-col items-center justify-center px-8 text-slate-800 dark:!bg-[#0a0a0b] dark:text-slate-100"
+      className="pss-splash-root relative flex min-h-[min(70dvh,28rem)] w-full flex-col items-center justify-center px-8 py-10 text-slate-800 dark:text-slate-100"
       style={{
         backgroundColor: backgroundHex,
-        paddingTop: "max(2rem, env(safe-area-inset-top))",
-        paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
+        paddingTop: "max(1rem, env(safe-area-inset-top))",
+        paddingBottom: "max(1rem, env(safe-area-inset-bottom))",
       }}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-[18%] h-[min(85vw,24rem)] w-[min(85vw,24rem)] -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-500/15"
+        className="pointer-events-none absolute left-1/2 top-[12%] h-[min(70vw,20rem)] w-[min(70vw,20rem)] -translate-x-1/2 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-500/15"
       />
       <div className="relative flex max-w-sm flex-col items-center text-center">
         <div className="pss-splash-logo-wrap rounded-3xl bg-white/90 p-3 shadow-lg ring-1 ring-slate-200/80 dark:bg-white/10 dark:ring-white/10">

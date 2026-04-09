@@ -7,7 +7,9 @@ const MAP: Record<SessionValidationError["code"], string> = {
     "Jam mulai tidak diizinkan: Sen–Jum 13:00–18:00 (mulai terakhir 17:00), Sab–Min 08:00–16:00 (mulai terakhir 15:00) WIB.",
   LANE_BUNDLE_MISMATCH: "Lintasan tidak cocok dengan bundle level (1–3 hanya line 1; 4–9 line 2–4).",
   COACH_PRIMARY_INVALID: "Pelatih utama tidak mencakup seluruh level bundle.",
-  COACH_SECONDARY_INVALID: "Pelatih kedua tidak mencakup seluruh level bundle.",
+  COACH_SECONDARY_NOT_FOUND: "Pelatih kedua tidak ditemukan.",
+  COACH_SECONDARY_INVALID:
+    "Pelatih kedua tidak mencakup bundle ini (atur level lead / trainee di menu Pelatih).",
   COACH_DUPLICATE: "Pelatih utama dan kedua tidak boleh sama.",
   LANE1_TOO_MANY_CLASSES: "Line 1 untuk level 1–3 sudah penuh (maksimal 2 kelas pada jam yang sama).",
   LANE_OCCUPIED: "Lintasan ini sudah dipakai kelas lain pada jam yang sama.",

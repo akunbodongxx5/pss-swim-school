@@ -91,9 +91,39 @@ export function coachCanTeachBundle(teachLevelsRaw: unknown, bundle: LevelBundle
   return needed.length > 0 && needed.every((L) => levels.includes(L));
 }
 
+/** Level trainee tidak boleh overlap lead; disimpan setelah normalisasi. */
+export function disjointTraineeFromLead(lead: number[], trainee: number[]): number[] {
+  const L = new Set(lead);
+  return trainee.filter((t) => !L.has(t));
+}
+
+export function serializeTraineeLevels(levels: number[]): string {
+  return JSON.stringify(normalizeTeachLevels(levels));
+}
+
+/**
+ * Boleh jadi pelatih kedua untuk bundle jika setiap level bundle tercakup oleh
+ * lead (teachLevels) atau trainee (traineeLevels), tanpa overlap.
+ */
+export function coachCanAssistBundle(
+  teachLevelsRaw: unknown,
+  traineeLevelsRaw: unknown,
+  bundle: LevelBundle
+): boolean {
+  const lead = normalizeTeachLevels(teachLevelsRaw);
+  const train = disjointTraineeFromLead(lead, normalizeTeachLevels(traineeLevelsRaw));
+  const needed = levelsAllowedForBundle(bundle);
+  return needed.length > 0 && needed.every((L) => lead.includes(L) || train.includes(L));
+}
+
 /** Teks ringkas untuk UI, mis. "1 · 2 · 4 · 8". */
 export function formatTeachLevels(teachLevelsRaw: unknown): string {
   const levels = normalizeTeachLevels(teachLevelsRaw);
+  return levels.length ? levels.join(" · ") : "—";
+}
+
+export function formatTraineeLevels(traineeLevelsRaw: unknown): string {
+  const levels = normalizeTeachLevels(traineeLevelsRaw);
   return levels.length ? levels.join(" · ") : "—";
 }
 

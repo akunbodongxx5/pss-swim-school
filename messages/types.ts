@@ -75,6 +75,8 @@ export type MessageTree = {
     bundle: string;
     coachPrimary: string;
     coachSecondary: string;
+    coachSecondaryHint: string;
+    traineeTag: string;
     studentsPick: string;
     capacity: string;
     noMatchingLevel: string;
@@ -172,7 +174,10 @@ export type MessageTree = {
     hint: string;
     thName: string;
     thLevel: string;
+    leadLevelsLabel: string;
+    traineeLevelsLabel: string;
     pickLevels: string;
+    pickTraineeLevels: string;
     save: string;
     saved: string;
     saveFailed: string;

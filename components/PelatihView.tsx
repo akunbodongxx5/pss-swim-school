@@ -2,28 +2,50 @@
 
 import { useEffect, useState } from "react";
 import { ChevronDown, Eye, Sparkles, UserPlus } from "lucide-react";
-import { formatTeachLevels, normalizeTeachLevels } from "@/lib/domain";
+import {
+  disjointTraineeFromLead,
+  formatTeachLevels,
+  formatTraineeLevels,
+  normalizeTeachLevels,
+} from "@/lib/domain";
 import { useApp } from "@/lib/i18n-context";
 
-type Coach = { id: string; name: string; teachLevels: unknown };
+export type Coach = { id: string; name: string; teachLevels: unknown; traineeLevels?: unknown };
 
 const LEVELS_1_9 = [1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 
 const inputClass =
   "mt-1 w-full min-h-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--text)]";
 
+type LevelDraft = { lead: Set<number>; train: Set<number> };
+
+function getDraftFrom(
+  prev: Record<string, LevelDraft>,
+  id: string,
+  base: Coach
+): { lead: Set<number>; train: Set<number> } {
+  const d = prev[id];
+  if (d) return { lead: new Set(d.lead), train: new Set(d.train) };
+  const lead = normalizeTeachLevels(base.teachLevels);
+  const train = disjointTraineeFromLead(lead, normalizeTeachLevels(base.traineeLevels ?? []));
+  return { lead: new Set(lead), train: new Set(train) };
+}
+
 export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach[]; canEdit: boolean }) {
   const { t } = useApp();
   const [rows, setRows] = useState<Coach[]>(initialCoaches);
   const [nameDraft, setNameDraft] = useState<Record<string, string>>({});
-  const [levelDraft, setLevelDraft] = useState<Record<string, Set<number>>>({});
+  const [drafts, setDrafts] = useState<Record<string, LevelDraft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const [newName, setNewName] = useState("");
-  const [newLevels, setNewLevels] = useState<Set<number>>(() => new Set(LEVELS_1_9));
+  const [newLevels, setNewLevels] = useState<LevelDraft>(() => ({
+    lead: new Set(LEVELS_1_9),
+    train: new Set<number>(),
+  }));
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
@@ -38,28 +60,57 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
     setNameDraft((prev) => ({ ...prev, [id]: value }));
   }
 
-  function getLevelSet(c: Coach): Set<number> {
-    const d = levelDraft[c.id];
-    if (d) return new Set(d);
-    return new Set(normalizeTeachLevels(c.teachLevels));
-  }
-
-  function toggleLevelDraft(coachId: string, level: number, base: Coach) {
-    setLevelDraft((prev) => {
-      const cur = prev[coachId] ?? new Set(normalizeTeachLevels(base.teachLevels));
-      const copy = new Set(cur);
-      if (copy.has(level)) copy.delete(level);
-      else copy.add(level);
-      return { ...prev, [coachId]: copy };
+  function toggleLead(c: Coach, level: number) {
+    setDrafts((prev) => {
+      const cur = getDraftFrom(prev, c.id, c);
+      const lead = new Set(cur.lead);
+      const train = new Set(cur.train);
+      if (lead.has(level)) lead.delete(level);
+      else {
+        lead.add(level);
+        train.delete(level);
+      }
+      return { ...prev, [c.id]: { lead, train } };
     });
   }
 
-  function toggleNewLevel(level: number) {
+  function toggleTrainee(c: Coach, level: number) {
+    setDrafts((prev) => {
+      const cur = getDraftFrom(prev, c.id, c);
+      const lead = new Set(cur.lead);
+      const train = new Set(cur.train);
+      if (train.has(level)) train.delete(level);
+      else {
+        train.add(level);
+        lead.delete(level);
+      }
+      return { ...prev, [c.id]: { lead, train } };
+    });
+  }
+
+  function toggleNewLead(level: number) {
     setNewLevels((prev) => {
-      const copy = new Set(prev);
-      if (copy.has(level)) copy.delete(level);
-      else copy.add(level);
-      return copy;
+      const lead = new Set(prev.lead);
+      const train = new Set(prev.train);
+      if (lead.has(level)) lead.delete(level);
+      else {
+        lead.add(level);
+        train.delete(level);
+      }
+      return { lead, train };
+    });
+  }
+
+  function toggleNewTrainee(level: number) {
+    setNewLevels((prev) => {
+      const lead = new Set(prev.lead);
+      const train = new Set(prev.train);
+      if (train.has(level)) train.delete(level);
+      else {
+        train.add(level);
+        lead.delete(level);
+      }
+      return { lead, train };
     });
   }
 
@@ -75,16 +126,18 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
       setErr(t("coaches.saveFailed"));
       return;
     }
-    const levels = normalizeTeachLevels([...getLevelSet(c)]);
-    if (levels.length === 0) {
+    const d = getDraftFrom(drafts, c.id, c);
+    const teachLevels = normalizeTeachLevels([...d.lead]);
+    if (teachLevels.length === 0) {
       setErr(t("coaches.atLeastOneLevel"));
       return;
     }
+    const traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels([...d.train]));
     setSavingId(c.id);
     const r = await fetch(`/api/coaches?id=${encodeURIComponent(c.id)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, teachLevels: levels }),
+      body: JSON.stringify({ name, teachLevels, traineeLevels }),
     });
     const data = await r.json();
     setSavingId(null);
@@ -94,13 +147,13 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
     }
     setMsg(t("coaches.saved"));
     setRows((prev) => prev.map((x) => (x.id === c.id ? { ...x, ...data } : x)));
-    setNameDraft((d) => {
-      const n = { ...d };
+    setNameDraft((d0) => {
+      const n = { ...d0 };
       delete n[c.id];
       return n;
     });
-    setLevelDraft((d) => {
-      const n = { ...d };
+    setDrafts((d0) => {
+      const n = { ...d0 };
       delete n[c.id];
       return n;
     });
@@ -119,13 +172,13 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
     }
     setMsg(t("coaches.deleted"));
     setRows((prev) => prev.filter((x) => x.id !== c.id));
-    setNameDraft((d) => {
-      const n = { ...d };
+    setNameDraft((d0) => {
+      const n = { ...d0 };
       delete n[c.id];
       return n;
     });
-    setLevelDraft((d) => {
-      const n = { ...d };
+    setDrafts((d0) => {
+      const n = { ...d0 };
       delete n[c.id];
       return n;
     });
@@ -140,14 +193,16 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
       setErr(t("coaches.saveFailed"));
       return;
     }
-    const levels = normalizeTeachLevels([...newLevels]);
+    const teachLevels = normalizeTeachLevels([...newLevels.lead]);
+    const traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels([...newLevels.train]));
     setAdding(true);
     const r = await fetch("/api/coaches", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name,
-        teachLevels: levels.length ? levels : [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        teachLevels: teachLevels.length ? teachLevels : [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        traineeLevels,
       }),
     });
     const data = await r.json();
@@ -159,7 +214,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
     setMsg(t("coaches.saved"));
     setRows((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
     setNewName("");
-    setNewLevels(new Set(LEVELS_1_9));
+    setNewLevels({ lead: new Set(LEVELS_1_9), train: new Set() });
   }
 
   const isExpanded = (id: string) => expandedId === id;
@@ -195,13 +250,14 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
                 placeholder={t("students.namePlaceholder")}
               />
             </label>
+            <p className="text-xs font-medium text-[var(--text)]">{t("coaches.leadLevelsLabel")}</p>
             <p className="text-xs text-[var(--muted)]">{t("coaches.pickLevels")}</p>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
               {LEVELS_1_9.map((lv) => (
                 <label
                   key={lv}
                   className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border text-sm font-semibold ${
-                    newLevels.has(lv)
+                    newLevels.lead.has(lv)
                       ? "border-[var(--accent)] bg-[var(--accent)] text-white"
                       : "border-[var(--border)] bg-[var(--bg)] text-[var(--muted)]"
                   }`}
@@ -209,8 +265,30 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
                   <input
                     type="checkbox"
                     className="sr-only"
-                    checked={newLevels.has(lv)}
-                    onChange={() => toggleNewLevel(lv)}
+                    checked={newLevels.lead.has(lv)}
+                    onChange={() => toggleNewLead(lv)}
+                  />
+                  {lv}
+                </label>
+              ))}
+            </div>
+            <p className="text-xs font-medium text-[var(--text)]">{t("coaches.traineeLevelsLabel")}</p>
+            <p className="text-xs text-[var(--muted)]">{t("coaches.pickTraineeLevels")}</p>
+            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+              {LEVELS_1_9.map((lv) => (
+                <label
+                  key={lv}
+                  className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border text-sm font-semibold ${
+                    newLevels.train.has(lv)
+                      ? "border-amber-500 bg-amber-500 text-white"
+                      : "border-[var(--border)] bg-[var(--bg)] text-[var(--muted)]"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={newLevels.train.has(lv)}
+                    onChange={() => toggleNewTrainee(lv)}
                   />
                   {lv}
                 </label>
@@ -231,8 +309,9 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
       <ul className="space-y-3">
         {rows.map((c) => {
           const nm = getName(c);
-          const set = getLevelSet(c);
-          const levels = normalizeTeachLevels(c.teachLevels);
+          const d = getDraftFrom(drafts, c.id, c);
+          const leadArr = normalizeTeachLevels(c.teachLevels);
+          const trainArr = disjointTraineeFromLead(leadArr, normalizeTeachLevels(c.traineeLevels ?? []));
           const expanded = isExpanded(c.id);
 
           return (
@@ -240,7 +319,6 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
               key={c.id}
               className="pss-card-lift rounded-2xl border border-zinc-200/70 bg-[var(--surface)] shadow-sm dark:border-zinc-700/80"
             >
-              {/* Collapsed header — always visible */}
               <button
                 type="button"
                 onClick={() => canEdit && toggleExpand(c.id)}
@@ -256,10 +334,18 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
 
                 <span className="flex shrink-0 items-center gap-2">
                   <span className="flex flex-wrap gap-1">
-                    {levels.map((lv) => (
+                    {leadArr.map((lv) => (
                       <span
-                        key={lv}
+                        key={`l${lv}`}
                         className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--accent)]/15 text-xs font-semibold text-[var(--accent)]"
+                      >
+                        {lv}
+                      </span>
+                    ))}
+                    {trainArr.map((lv) => (
+                      <span
+                        key={`t${lv}`}
+                        className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/20 text-xs font-semibold text-amber-700 dark:text-amber-400"
                       >
                         {lv}
                       </span>
@@ -275,17 +361,25 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
                 </span>
               </button>
 
-              {/* Read-only detail for non-editors */}
               {!canEdit && (
-                <div className="border-t border-[var(--border)] px-4 py-3">
-                  <span className="text-xs uppercase tracking-wide text-[var(--muted)]">{t("coaches.thLevel")}</span>
-                  <span className="ml-2 text-sm font-semibold text-[var(--text)]">
-                    {formatTeachLevels(c.teachLevels)}
-                  </span>
+                <div className="space-y-2 border-t border-[var(--border)] px-4 py-3">
+                  <p className="text-sm">
+                    <span className="text-xs uppercase tracking-wide text-[var(--muted)]">
+                      {t("coaches.leadLevelsLabel")}{" "}
+                    </span>
+                    <span className="font-semibold text-[var(--text)]">{formatTeachLevels(c.teachLevels)}</span>
+                  </p>
+                  <p className="text-sm">
+                    <span className="text-xs uppercase tracking-wide text-[var(--muted)]">
+                      {t("coaches.traineeLevelsLabel")}{" "}
+                    </span>
+                    <span className="font-semibold text-[var(--text)]">
+                      {formatTraineeLevels(c.traineeLevels ?? [])}
+                    </span>
+                  </p>
                 </div>
               )}
 
-              {/* Expanded edit form */}
               {canEdit && expanded && (
                 <div className="pss-expand-in border-t border-[var(--border)] space-y-3 px-4 pb-4 pt-3">
                   <label className="block text-sm">
@@ -296,13 +390,14 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
                       className={inputClass}
                     />
                   </label>
+                  <p className="text-xs font-medium text-[var(--text)]">{t("coaches.leadLevelsLabel")}</p>
                   <p className="text-xs text-[var(--muted)]">{t("coaches.pickLevels")}</p>
                   <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
                     {LEVELS_1_9.map((lv) => (
                       <label
                         key={lv}
                         className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${
-                          set.has(lv)
+                          d.lead.has(lv)
                             ? "border-[var(--accent)] bg-[var(--accent)] text-white"
                             : "border-[var(--border)] bg-[var(--bg)] text-[var(--muted)]"
                         }`}
@@ -310,15 +405,38 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
                         <input
                           type="checkbox"
                           className="sr-only"
-                          checked={set.has(lv)}
-                          onChange={() => toggleLevelDraft(c.id, lv, c)}
+                          checked={d.lead.has(lv)}
+                          onChange={() => toggleLead(c, lv)}
+                        />
+                        {lv}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs font-medium text-[var(--text)]">{t("coaches.traineeLevelsLabel")}</p>
+                  <p className="text-xs text-[var(--muted)]">{t("coaches.pickTraineeLevels")}</p>
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                    {LEVELS_1_9.map((lv) => (
+                      <label
+                        key={lv}
+                        className={`flex min-h-11 cursor-pointer items-center justify-center rounded-xl border text-sm font-semibold transition-colors ${
+                          d.train.has(lv)
+                            ? "border-amber-500 bg-amber-500 text-white"
+                            : "border-[var(--border)] bg-[var(--bg)] text-[var(--muted)]"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={d.train.has(lv)}
+                          onChange={() => toggleTrainee(c, lv)}
                         />
                         {lv}
                       </label>
                     ))}
                   </div>
                   <p className="text-xs text-[var(--muted)]">
-                    {t("coaches.thLevel")}: {formatTeachLevels([...set].sort((a, b) => a - b))}
+                    {t("coaches.leadLevelsLabel")}: {formatTeachLevels([...d.lead].sort((a, b) => a - b))} ·{" "}
+                    {t("coaches.traineeLevelsLabel")}: {formatTraineeLevels([...d.train].sort((a, b) => a - b))}
                   </p>
                   <button
                     type="button"

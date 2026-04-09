@@ -1,5 +1,6 @@
 import type { LevelBundle, PrismaClient } from "@prisma/client";
 import {
+  coachCanAssistBundle,
   coachCanTeachBundle,
   laneAllowedForBundle,
   levelsAllowedForBundle,
@@ -14,6 +15,7 @@ export type SessionValidationError =
   | { code: "OUTSIDE_OPERATING_HOURS" }
   | { code: "LANE_BUNDLE_MISMATCH" }
   | { code: "COACH_PRIMARY_INVALID" }
+  | { code: "COACH_SECONDARY_NOT_FOUND" }
   | { code: "COACH_SECONDARY_INVALID" }
   | { code: "COACH_DUPLICATE" }
   | { code: "LANE1_TOO_MANY_CLASSES" }
@@ -59,11 +61,12 @@ export async function validateScheduledSession(
     errors.push({ code: "COACH_PRIMARY_INVALID" });
   }
   if (input.coachSecondaryId) {
-    if (!secondary || !coachCanTeachBundle(secondary.teachLevels, input.bundle)) {
-      errors.push({ code: "COACH_SECONDARY_INVALID" });
-    }
-    if (input.coachSecondaryId === input.coachPrimaryId) {
+    if (!secondary) {
+      errors.push({ code: "COACH_SECONDARY_NOT_FOUND" });
+    } else if (input.coachSecondaryId === input.coachPrimaryId) {
       errors.push({ code: "COACH_DUPLICATE" });
+    } else if (!coachCanAssistBundle(secondary.teachLevels, secondary.traineeLevels, input.bundle)) {
+      errors.push({ code: "COACH_SECONDARY_INVALID" });
     }
   }
 
