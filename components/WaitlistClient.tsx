@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { CheckCheck, ClipboardList, ListPlus, StickyNote, User } from "lucide-react";
 import { useApp } from "@/lib/i18n-context";
 
 type Student = { id: string; name: string; level: number };
@@ -52,14 +53,23 @@ export function WaitlistClient({ canEdit }: { canEdit: boolean }) {
 
   return (
     <div className="space-y-6">
-      <p className="text-sm leading-relaxed text-[var(--muted)]">{t("waitlist.hint")}</p>
+      <div className="pss-panel flex items-start gap-3 p-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white shadow-md shadow-violet-500/20">
+          <ClipboardList className="h-5 w-5" />
+        </div>
+        <p className="text-sm leading-relaxed text-[var(--text)]">{t("waitlist.hint")}</p>
+      </div>
+
       {canEdit && (
         <form
           onSubmit={add}
-          className="flex flex-col gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
+          className="pss-panel flex flex-col gap-4 p-5"
         >
-          <label className="block text-sm">
-            {t("waitlist.student")}
+          <label className="block text-sm font-medium">
+            <span className="flex items-center gap-2 text-[var(--text)]">
+              <User className="h-4 w-4 text-violet-500" />
+              {t("waitlist.student")}
+            </span>
             <select value={studentId} onChange={(e) => setStudentId(e.target.value)} className={fieldClass}>
               {students.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -68,14 +78,18 @@ export function WaitlistClient({ canEdit }: { canEdit: boolean }) {
               ))}
             </select>
           </label>
-          <label className="block text-sm">
-            {t("waitlist.note")}
+          <label className="block text-sm font-medium">
+            <span className="flex items-center gap-2 text-[var(--text)]">
+              <StickyNote className="h-4 w-4 text-amber-500" />
+              {t("waitlist.note")}
+            </span>
             <input value={note} onChange={(e) => setNote(e.target.value)} className={fieldClass} />
           </label>
           <button
             type="submit"
-            className="min-h-11 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white"
+            className="flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-violet-500 to-fuchsia-600 text-sm font-bold text-white shadow-lg shadow-violet-500/25"
           >
+            <ListPlus className="h-5 w-5" />
             {t("waitlist.add")}
           </button>
         </form>
@@ -84,18 +98,24 @@ export function WaitlistClient({ canEdit }: { canEdit: boolean }) {
         {entries.map((x) => (
           <li
             key={x.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-md"
           >
-            <div className="min-w-0 flex-1">
-              <span className="font-semibold text-[var(--text)]">{x.student.name}</span>
-              {x.note && <span className="mt-1 block text-sm text-[var(--muted)]">{x.note}</span>}
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-100 to-teal-100 dark:from-sky-900/40 dark:to-teal-900/30">
+                <User className="h-5 w-5 text-sky-600 dark:text-sky-400" />
+              </div>
+              <div>
+                <span className="font-bold text-[var(--text)]">{x.student.name}</span>
+                {x.note && <span className="mt-1 block text-sm text-[var(--muted)]">{x.note}</span>}
+              </div>
             </div>
             {canEdit && (
               <button
                 type="button"
-                className="min-h-10 shrink-0 text-sm font-semibold text-[var(--accent)]"
+                className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-xl bg-emerald-500/15 px-3 text-sm font-bold text-emerald-700 dark:text-emerald-400"
                 onClick={() => void done(x.id)}
               >
+                <CheckCheck className="h-4 w-4" />
                 {t("waitlist.markDone")}
               </button>
             )}

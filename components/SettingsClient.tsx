@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+import { ImagePlus, Save, Type } from "lucide-react";
 import { useBranding } from "@/lib/branding-context";
 import { useApp } from "@/lib/i18n-context";
 import type { SchoolBrandingDTO } from "@/lib/school-branding-server";
@@ -92,7 +93,7 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
     return (
       <div className="space-y-4">
         <p className="text-sm text-[var(--muted)]">{m.settings.coachReadOnly}</p>
-        <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+        <div className="pss-panel p-4">
           <p className="text-lg font-semibold">{initialBranding.schoolName}</p>
           {initialBranding.logoDataUrl ? (
             <img
@@ -108,24 +109,32 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-[var(--muted)]">{m.settings.intro}</p>
+      <div className="pss-panel border-l-4 border-l-sky-500 p-4 text-sm leading-relaxed text-[var(--text)]">
+        {m.settings.intro}
+      </div>
 
       <label className="block">
-        <span className="mb-1 block text-sm font-medium">{m.settings.schoolNameLabel}</span>
+        <span className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
+          <Type className="h-4 w-4 text-sky-500" />
+          {m.settings.schoolNameLabel}
+        </span>
         <input
           type="text"
           value={schoolName}
           onChange={(e) => setSchoolName(e.target.value)}
           maxLength={100}
-          className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5 text-[var(--text)] outline-none ring-[var(--accent)] focus:ring-2"
+          className="w-full rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text)] outline-none transition-shadow focus:border-sky-400 focus:ring-4 focus:ring-sky-500/15 dark:focus:ring-sky-500/10"
         />
         <span className="mt-1 block text-xs text-[var(--muted)]">{m.settings.schoolNameHint}</span>
       </label>
 
       <div>
-        <span className="mb-1 block text-sm font-medium">{m.settings.logoLabel}</span>
+        <span className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--text)]">
+          <ImagePlus className="h-4 w-4 text-violet-500" />
+          {m.settings.logoLabel}
+        </span>
         <div className="flex flex-wrap items-center gap-2">
-          <label className="pss-btn inline-flex cursor-pointer rounded-xl bg-[var(--border)]/50 px-4 py-2 text-sm font-medium active:bg-[var(--border)]">
+          <label className="pss-btn inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[var(--accent-soft)] px-4 py-2.5 text-sm font-semibold text-[var(--accent)] active:opacity-90">
             <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="sr-only" onChange={(e) => onPickFile(e.target.files?.[0] ?? null)} />
             {m.settings.pickLogo}
           </label>
@@ -161,8 +170,9 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="pss-btn w-full rounded-xl bg-[var(--accent)] py-3 text-sm font-semibold text-white disabled:opacity-50"
+        className="pss-btn flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-sky-600/25 disabled:opacity-50"
       >
+        <Save className="h-4 w-4" />
         {saving ? m.settings.saving : m.settings.save}
       </button>
     </div>

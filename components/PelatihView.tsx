@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronDown, Eye, Sparkles, UserPlus } from "lucide-react";
 import { formatTeachLevels, normalizeTeachLevels } from "@/lib/domain";
 import { useApp } from "@/lib/i18n-context";
 
@@ -165,18 +166,25 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
 
   return (
     <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-[var(--muted)]">{t("coaches.hint")}</p>
+      <div className="pss-panel flex items-start gap-3 border-l-4 border-l-teal-500 px-4 py-3.5 text-sm leading-relaxed text-[var(--text)]">
+        <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" strokeWidth={2} />
+        <p>{t("coaches.hint")}</p>
+      </div>
       {!canEdit && (
-        <p className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted)]">
-          {t("coaches.coachReadOnly")}
-        </p>
+        <div className="pss-panel flex items-start gap-3 border-l-4 border-l-violet-500 px-4 py-3.5 text-sm text-[var(--text)]">
+          <Eye className="mt-0.5 h-5 w-5 shrink-0 text-violet-500 dark:text-violet-400" strokeWidth={2} />
+          <p>{t("coaches.coachReadOnly")}</p>
+        </div>
       )}
       {msg && <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{msg}</p>}
       {err && <p className="text-sm text-[var(--danger)]">{err}</p>}
 
       {canEdit && (
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
-          <h2 className="text-base font-semibold">{t("coaches.addTitle")}</h2>
+        <section className="pss-panel p-4">
+          <h2 className="flex items-center gap-2 text-base font-bold text-[var(--text)]">
+            <UserPlus className="h-5 w-5 text-teal-500" />
+            {t("coaches.addTitle")}
+          </h2>
           <div className="mt-3 space-y-3">
             <label className="block text-sm">
               {t("coaches.thName")}
@@ -212,7 +220,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
               type="button"
               disabled={adding}
               onClick={() => void addCoach()}
-              className="min-h-11 w-full rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white disabled:opacity-50"
+              className="min-h-11 w-full rounded-xl bg-gradient-to-r from-teal-500 to-cyan-600 px-4 text-sm font-bold text-white shadow-lg shadow-teal-500/25 disabled:opacity-50"
             >
               {t("coaches.addButton")}
             </button>
@@ -230,7 +238,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
           return (
             <li
               key={c.id}
-              className="pss-card-lift rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-sm"
+              className="pss-card-lift rounded-2xl border border-zinc-200/70 bg-[var(--surface)] shadow-sm dark:border-zinc-700/80"
             >
               {/* Collapsed header — always visible */}
               <button
@@ -259,15 +267,10 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
                   </span>
 
                   {canEdit && (
-                    <svg
-                      className={`h-4 w-4 shrink-0 text-[var(--muted)] transition-transform ${expanded ? "rotate-180" : ""}`}
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <ChevronDown
+                      className={`h-5 w-5 shrink-0 text-[var(--muted)] transition-transform ${expanded ? "rotate-180" : ""}`}
+                      strokeWidth={2.2}
+                    />
                   )}
                 </span>
               </button>
@@ -321,7 +324,7 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
                     type="button"
                     disabled={savingId === c.id}
                     onClick={() => void saveCoach(c)}
-                    className="min-h-11 w-full rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white disabled:opacity-50"
+                    className="min-h-11 w-full rounded-xl bg-gradient-to-r from-teal-500 to-cyan-600 px-4 text-sm font-bold text-white shadow-md shadow-teal-500/20 disabled:opacity-50"
                   >
                     {t("coaches.save")}
                   </button>

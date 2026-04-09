@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { KeyRound, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { useApp } from "@/lib/i18n-context";
 
 export default function LoginPage() {
@@ -36,26 +37,62 @@ export default function LoginPage() {
 
   return (
     <div className="space-y-6">
-      <p className="text-xl font-semibold">{t("login.headline")}</p>
-      <p className="text-sm leading-relaxed text-[var(--muted)]">{t("login.body")}</p>
+      <div className="pss-panel flex items-start gap-3 p-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-600 to-teal-600 text-white shadow-lg shadow-sky-500/20">
+          <Sparkles className="h-6 w-6" />
+        </div>
+        <div>
+          <p className="text-xl font-bold tracking-tight text-[var(--text)]">{t("login.headline")}</p>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{t("login.body")}</p>
+        </div>
+      </div>
+
       <form
         onSubmit={submit}
-        className="pss-animate-fade-in-up space-y-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm"
+        className="pss-animate-fade-in-up pss-panel space-y-5 p-5"
       >
-        <label className="block text-sm">
-          <span className="text-[var(--muted)]">{t("login.role")}</span>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value as "admin" | "coach")}
-            className={fieldClass}
-          >
-            <option value="admin">{t("login.admin")}</option>
-            <option value="coach">{t("login.coach")}</option>
-          </select>
-        </label>
+        <div>
+          <span className="text-xs font-semibold text-[var(--muted)]">{t("login.role")}</span>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setRole("admin")}
+              className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-4 text-center transition-all ${
+                role === "admin"
+                  ? "border-sky-500 bg-sky-500/10 ring-2 ring-sky-500/25 dark:bg-sky-500/15"
+                  : "border-zinc-200 bg-zinc-50/50 hover:border-sky-200 dark:border-zinc-700 dark:bg-zinc-900/40"
+              }`}
+            >
+              <ShieldCheck
+                className={`h-9 w-9 ${role === "admin" ? "text-sky-600" : "text-[var(--muted)]"}`}
+                strokeWidth={2}
+              />
+              <span className="text-sm font-bold text-[var(--text)]">{t("login.admin")}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("coach")}
+              className={`flex flex-col items-center gap-2 rounded-2xl border px-3 py-4 text-center transition-all ${
+                role === "coach"
+                  ? "border-teal-500 bg-teal-500/10 ring-2 ring-teal-500/25 dark:bg-teal-500/15"
+                  : "border-zinc-200 bg-zinc-50/50 hover:border-teal-200 dark:border-zinc-700 dark:bg-zinc-900/40"
+              }`}
+            >
+              <UserRound
+                className={`h-9 w-9 ${role === "coach" ? "text-teal-600" : "text-[var(--muted)]"}`}
+                strokeWidth={2}
+              />
+              <span className="text-sm font-bold text-[var(--text)]">{t("login.coach")}</span>
+            </button>
+          </div>
+        </div>
+
         {role === "admin" && (
           <label className="block text-sm">
-            <span className="text-[var(--muted)]">PIN Admin</span>
+            <span className="flex items-center gap-2 font-medium text-[var(--text)]">
+              <KeyRound className="h-4 w-4 text-amber-500" />
+              PIN Admin
+            </span>
             <input
               type="password"
               inputMode="numeric"
@@ -63,17 +100,17 @@ export default function LoginPage() {
               maxLength={8}
               value={pin}
               onChange={(e) => setPin(e.target.value)}
-              placeholder="****"
+              placeholder="••••"
               className={fieldClass}
               required
             />
           </label>
         )}
-        {err && <p className="text-sm text-[var(--danger)]">{err}</p>}
+        {err && <p className="text-sm font-medium text-[var(--danger)]">{err}</p>}
         <button
           type="submit"
           disabled={loading}
-          className="min-h-11 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white disabled:opacity-50"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 text-sm font-bold text-white shadow-lg shadow-sky-600/25 disabled:opacity-50"
         >
           {loading ? t("login.saving") : t("login.apply")}
         </button>

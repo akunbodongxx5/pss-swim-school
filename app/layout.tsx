@@ -1,10 +1,19 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
+import { AppShell } from "@/components/AppShell";
+import { RegisterServiceWorker } from "@/components/RegisterServiceWorker";
 import { BrandingProvider } from "@/lib/branding-context";
 import { AppProviders } from "@/lib/i18n-context";
-import { AppShell } from "@/components/AppShell";
 import { getSchoolBranding, getSchoolBrandingMeta } from "@/lib/school-branding-server";
+
+const fontSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+  weight: ["400", "600", "700"],
+});
 
 export const dynamic = "force-dynamic";
 
@@ -45,8 +54,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f0f4fb" },
-    { media: "(prefers-color-scheme: dark)", color: "#0c1222" },
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0b" },
   ],
 };
 
@@ -62,22 +71,17 @@ const THEME_BOOT = `
   } catch (e) {}
 })();`;
 
-const SW_REGISTER = `
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('/sw.js').catch(function(){});
-}`;
-
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const branding = await getSchoolBranding();
   const role = (cookies().get("pss_role")?.value === "coach" ? "coach" : "admin") as "admin" | "coach";
 
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="id" className={fontSans.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
-        <script dangerouslySetInnerHTML={{ __html: SW_REGISTER }} />
       </head>
-      <body className="min-h-[100dvh] antialiased">
+      <body className={`${fontSans.className} min-h-[100dvh] antialiased`}>
+        <RegisterServiceWorker />
         <AppProviders>
           <BrandingProvider initial={branding}>
             <AppShell initialRole={role}>{children}</AppShell>

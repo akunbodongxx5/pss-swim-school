@@ -3,63 +3,23 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  CalendarDays,
+  ClipboardList,
+  Home,
+  LogIn,
+  Menu,
+  Settings,
+  Trash2,
+  Users,
+  Waves,
+  X,
+} from "lucide-react";
 import { clearAllSchedulesWithUndo } from "@/lib/schedule-undo";
 import { useBranding } from "@/lib/branding-context";
 import { useApp, type ThemeMode } from "@/lib/i18n-context";
 
 type Role = "admin" | "coach";
-
-function IconCalendar({ active }: { active: boolean }) {
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5a2.25 2.25 0 002.25-2.25m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5a2.25 2.25 0 012.25 2.25v7.5"
-      />
-    </svg>
-  );
-}
-
-function IconUsers({ active }: { active: boolean }) {
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
-      />
-    </svg>
-  );
-}
-
-function IconCoach({ active }: { active: boolean }) {
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.8}>
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.847a4.5 4.5 0 003.09 3.09L15.75 12l-2.847.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
-      />
-    </svg>
-  );
-}
-
-function IconMenu() {
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-    </svg>
-  );
-}
-
-function IconClose() {
-  return (
-    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  );
-}
 
 function titleForPath(pathname: string, t: (k: string) => string): string {
   if (pathname === "/" || pathname === "") return t("titles.home");
@@ -93,38 +53,42 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
   const roleLabel = initialRole === "coach" ? t("login.coach") : t("login.admin");
 
   const tabs = [
-    { href: "/jadwal", label: m.nav.schedule, icon: IconCalendar },
-    { href: "/murid", label: m.nav.students, icon: IconUsers },
-    { href: "/pelatih", label: m.nav.coaches, icon: IconCoach },
+    { href: "/jadwal", label: m.nav.schedule, Icon: CalendarDays },
+    { href: "/murid", label: m.nav.students, Icon: Users },
+    { href: "/pelatih", label: m.nav.coaches, Icon: Waves },
   ] as const;
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-[var(--bg)] text-[var(--text)]">
+    <div className="flex min-h-[100dvh] flex-col text-[var(--text)]">
       <header
-        className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md"
+        className="sticky top-0 z-40 border-b border-zinc-200/80 bg-white/85 text-[var(--text)] shadow-[0_1px_0_0_rgba(0,0,0,0.04)] backdrop-blur-xl dark:border-zinc-800/90 dark:bg-zinc-950/80 dark:text-zinc-50 dark:shadow-[0_1px_0_0_rgba(255,255,255,0.06)]"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top))" }}
       >
-        <div className="mx-auto flex h-12 max-w-lg items-center justify-between gap-2 px-4">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="mx-auto flex h-[3.35rem] max-w-lg items-center justify-between gap-2 px-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             {branding.logoDataUrl ? (
               <img
                 src={branding.logoDataUrl}
                 alt=""
-                className="h-9 w-9 shrink-0 rounded-lg object-contain ring-1 ring-[var(--border)]"
+                className="h-10 w-10 shrink-0 rounded-2xl bg-zinc-100 object-contain p-0.5 shadow-sm ring-1 ring-zinc-200/80 dark:bg-zinc-800 dark:ring-zinc-700"
               />
-            ) : null}
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-teal-600 text-white shadow-md shadow-sky-500/20">
+                <Waves className="h-6 w-6" strokeWidth={2.2} />
+              </div>
+            )}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[10px] font-medium leading-tight text-[var(--muted)]">{branding.schoolName}</p>
-              <h1 className="truncate text-base font-semibold leading-tight tracking-tight">{title}</h1>
+              <p className="truncate text-xs font-medium text-[var(--muted)]">{branding.schoolName}</p>
+              <h1 className="truncate text-base font-bold leading-tight tracking-tight text-[var(--text)]">{title}</h1>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="pss-btn flex h-11 w-11 items-center justify-center rounded-xl text-[var(--text)] active:bg-[var(--border)]"
+            className="pss-btn flex h-11 w-11 items-center justify-center rounded-xl text-[var(--muted)] hover:bg-zinc-100 active:bg-zinc-200/80 dark:hover:bg-zinc-800 dark:active:bg-zinc-700"
             aria-label={m.menu.title}
           >
-            <IconMenu />
+            <Menu className="h-6 w-6" strokeWidth={2} />
           </button>
         </div>
       </header>
@@ -139,26 +103,33 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
       </main>
 
       <nav
-        className="bottom-nav-shell fixed bottom-0 left-0 right-0 z-40 border-t border-[var(--border)] bg-[var(--surface)]/95 backdrop-blur-md"
-        style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
+        className="bottom-nav-shell fixed bottom-0 left-0 right-0 z-40 print:hidden"
+        style={{ paddingBottom: "max(0.35rem, env(safe-area-inset-bottom))" }}
       >
-        <div className="mx-auto flex max-w-lg items-stretch justify-around px-2 pt-1">
-          {tabs.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
-            return (
-              <Link
-                key={href}
-                href={href}
-                prefetch={false}
-                className={`pss-nav-tab flex min-h-[3.25rem] min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1 text-[10px] font-medium ${
-                  active ? "text-[var(--accent)]" : "text-[var(--muted)]"
-                }`}
-              >
-                <Icon active={active} />
-                {label}
-              </Link>
-            );
-          })}
+        <div className="mx-auto max-w-lg px-4 pb-2">
+          <div className="flex items-stretch justify-around gap-0.5 rounded-[1.35rem] border border-zinc-200/90 bg-white/95 py-1.5 shadow-[0_-8px_32px_-6px_rgba(15,23,42,0.12),0_0_0_1px_rgba(0,0,0,0.03)_inset] backdrop-blur-xl dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-[0_-12px_40px_-8px_rgba(0,0,0,0.55)]">
+            {tabs.map(({ href, label, Icon }) => {
+              const active = pathname === href || pathname.startsWith(href + "/");
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  prefetch={false}
+                  className={`pss-nav-tab flex min-h-[3.35rem] min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-[1.05rem] py-1.5 text-[10px] font-semibold ${
+                    active
+                      ? "bg-sky-500/12 text-sky-700 dark:bg-sky-500/18 dark:text-sky-300"
+                      : "text-[var(--muted)] hover:text-[var(--text)]"
+                  }`}
+                >
+                  <Icon
+                    className={`h-[1.35rem] w-[1.35rem] ${active ? "text-sky-600 dark:text-sky-400" : ""}`}
+                    strokeWidth={active ? 2.25 : 1.85}
+                  />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </nav>
 
@@ -166,23 +137,23 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
         <div className="fixed inset-0 z-50 flex justify-end" role="presentation">
           <button
             type="button"
-            className="pss-menu-backdrop absolute inset-0 cursor-default bg-black/40"
+            className="pss-menu-backdrop absolute inset-0 cursor-default bg-black/45"
             aria-hidden
             onClick={() => setMenuOpen(false)}
           />
           <aside
-            className="pss-menu-panel relative z-10 h-full w-[min(100%,20rem)] border-l border-[var(--border)] bg-[var(--surface)] shadow-xl"
+            className="pss-menu-panel relative z-10 h-full w-[min(100%,20rem)] border-l border-[var(--border)] bg-[var(--surface)] shadow-2xl"
             style={{ paddingTop: "env(safe-area-inset-top)" }}
           >
-            <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
-              <span className="font-semibold">{m.menu.title}</span>
+            <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--surface-2)] px-4 py-3">
+              <span className="font-bold text-[var(--text)]">{m.menu.title}</span>
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
-                className="pss-btn flex h-10 w-10 items-center justify-center rounded-xl active:bg-[var(--border)]"
+                className="pss-btn flex h-10 w-10 items-center justify-center rounded-xl text-[var(--muted)] active:bg-[var(--border)]"
                 aria-label="Close"
               >
-                <IconClose />
+                <X className="h-5 w-5" />
               </button>
             </div>
             <div className="space-y-1 p-3">
@@ -190,32 +161,36 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                 href="/"
                 prefetch={false}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-[var(--text)] transition-colors active:bg-[var(--accent-soft)]"
               >
+                <Home className="h-5 w-5 shrink-0 text-sky-500" />
                 {m.menu.home}
               </Link>
               <Link
                 href="/waitlist"
                 prefetch={false}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-[var(--text)] transition-colors active:bg-[var(--accent-soft)]"
               >
+                <ClipboardList className="h-5 w-5 shrink-0 text-violet-500" />
                 {m.menu.waitlist}
               </Link>
               <Link
                 href="/settings"
                 prefetch={false}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-[var(--text)] transition-colors active:bg-[var(--accent-soft)]"
               >
+                <Settings className="h-5 w-5 shrink-0 text-slate-500" />
                 {m.menu.schoolSettings}
               </Link>
               <Link
                 href="/login"
                 prefetch={false}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-200 active:bg-[var(--border)]"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-[var(--text)] transition-colors active:bg-[var(--accent-soft)]"
               >
+                <LogIn className="h-5 w-5 shrink-0 text-teal-500" />
                 {m.menu.roleLogin}
               </Link>
               {initialRole === "admin" && (
@@ -239,8 +214,9 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                       }
                     })();
                   }}
-                  className="pss-btn w-full rounded-xl px-4 py-3 text-left text-sm font-medium text-[var(--danger)] active:bg-[var(--border)] disabled:opacity-50"
+                  className="pss-btn flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-[var(--danger)] active:bg-red-500/10 disabled:opacity-50"
                 >
+                  <Trash2 className="h-5 w-5 shrink-0" />
                   {clearingSchedule ? "…" : m.menu.clearAllSchedule}
                 </button>
               )}
@@ -261,7 +237,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                     onClick={() => setTheme(mode)}
                     className={`pss-btn rounded-full px-3 py-2 text-xs font-medium ${
                       theme === mode
-                        ? "bg-[var(--accent)] text-white"
+                        ? "bg-[var(--accent)] text-white shadow-md"
                         : "bg-[var(--border)]/40 text-[var(--text)]"
                     }`}
                   >
@@ -280,7 +256,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                   type="button"
                   onClick={() => setLocale("id")}
                   className={`pss-btn rounded-full px-4 py-2 text-xs font-semibold ${
-                    locale === "id" ? "bg-[var(--accent)] text-white" : "bg-[var(--border)]/40"
+                    locale === "id" ? "bg-[var(--accent)] text-white shadow-md" : "bg-[var(--border)]/40"
                   }`}
                 >
                   ID
@@ -289,7 +265,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                   type="button"
                   onClick={() => setLocale("en")}
                   className={`pss-btn rounded-full px-4 py-2 text-xs font-semibold ${
-                    locale === "en" ? "bg-[var(--accent)] text-white" : "bg-[var(--border)]/40"
+                    locale === "en" ? "bg-[var(--accent)] text-white shadow-md" : "bg-[var(--border)]/40"
                   }`}
                 >
                   EN

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { Eye, GitMerge, Search, UserPlus, Users, UserX } from "lucide-react";
 import { useApp } from "@/lib/i18n-context";
 
 type Student = { id: string; name: string; level: number };
@@ -22,7 +23,7 @@ function LevelBadge({ level }: { level: number }) {
 
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold leading-5 ${color}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold leading-5 ${color}`}
     >
       L{level}
     </span>
@@ -47,23 +48,7 @@ function SkeletonRows() {
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center gap-3 py-10 text-[var(--muted)]">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="48"
-        height="48"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className="opacity-40"
-      >
-        <circle cx="12" cy="7" r="4" />
-        <path d="M5.5 21a6.5 6.5 0 0 1 13 0" />
-        <line x1="20" y1="8" x2="20" y2="14" />
-        <line x1="17" y1="11" x2="23" y2="11" />
-      </svg>
+      <UserX className="h-12 w-12 text-sky-400/70 dark:text-sky-500/50" strokeWidth={1.5} />
       <p className="text-sm">{message}</p>
     </div>
   );
@@ -201,34 +186,27 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
   return (
     <div className="space-y-6">
       {!canEdit && (
-        <p className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted)]">
-          {t("students.coachReadOnly")}
-        </p>
+        <div className="pss-panel flex items-start gap-3 border-l-4 border-l-violet-500 px-4 py-3.5 text-sm text-[var(--text)]">
+          <Eye className="mt-0.5 h-5 w-5 shrink-0 text-violet-500 dark:text-violet-400" strokeWidth={2} />
+          <p>{t("students.coachReadOnly")}</p>
+        </div>
       )}
 
       {msg && <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">{msg}</p>}
       {err && <p className="text-sm text-[var(--danger)]">{err}</p>}
 
-      <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
-        <h2 className="text-base font-semibold">{t("students.listTitle")}</h2>
+      <section className="pss-panel p-4">
+        <h2 className="flex items-center gap-2 text-base font-bold text-[var(--text)]">
+          <Users className="h-5 w-5 text-sky-500" />
+          {t("students.listTitle")}
+        </h2>
 
         {!loading && students.length > 0 && (
           <div className="relative mt-3">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]"
+              strokeWidth={2}
+            />
             <input
               value={searchQ}
               onChange={(e) => setSearchQ(e.target.value)}
@@ -248,7 +226,7 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
               <li
                 key={s.id}
                 style={{ "--pss-delay": `${Math.min(idx, 14) * 35}ms` } as CSSProperties}
-                className="pss-card-lift rounded-xl border border-[var(--border)] bg-[var(--bg)]/40 px-4 py-3 text-sm transition-colors duration-200 hover:bg-[var(--bg)]/70"
+                className="pss-card-lift rounded-2xl border border-zinc-200/70 bg-zinc-50/60 px-4 py-3 text-sm transition-colors duration-200 hover:bg-zinc-100/80 dark:border-zinc-700/80 dark:bg-zinc-900/40 dark:hover:bg-zinc-800/50"
               >
                 {editingId === s.id ? (
                   <div className="space-y-3">
@@ -274,7 +252,7 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
                         type="button"
                         disabled={savingStudentId === s.id || !editName.trim()}
                         onClick={() => void saveEdit()}
-                        className="min-h-10 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white disabled:opacity-50"
+                        className="min-h-10 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-600 px-4 text-sm font-bold text-white shadow-md shadow-sky-500/20 disabled:opacity-50"
                       >
                         {t("students.save")}
                       </button>
@@ -321,8 +299,11 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
 
       {canEdit && (
         <>
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
-            <h2 className="text-base font-semibold">{t("students.addTitle")}</h2>
+          <section className="pss-panel border-l-4 border-l-emerald-500 p-4">
+            <h2 className="flex items-center gap-2 text-base font-bold text-[var(--text)]">
+              <UserPlus className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              {t("students.addTitle")}
+            </h2>
             <form onSubmit={addStudent} className="mt-4 flex flex-col gap-3">
               <input
                 value={name}
@@ -344,15 +325,18 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
               </label>
               <button
                 type="submit"
-                className="min-h-11 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white"
+                className="min-h-11 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 px-4 text-sm font-bold text-white shadow-lg shadow-emerald-500/25"
               >
                 {t("students.save")}
               </button>
             </form>
           </section>
 
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm">
-            <h2 className="text-base font-semibold">{t("students.conflictsTitle")}</h2>
+          <section className="pss-panel border-l-4 border-l-amber-500 p-4">
+            <h2 className="flex items-center gap-2 text-base font-bold text-[var(--text)]">
+              <GitMerge className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              {t("students.conflictsTitle")}
+            </h2>
             <p className="mt-1 text-sm leading-relaxed text-[var(--muted)]">{t("students.conflictsHint")}</p>
             <form onSubmit={addPair} className="mt-4 flex flex-col gap-3">
               <label className="block text-sm">
@@ -377,7 +361,7 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
               </label>
               <button
                 type="submit"
-                className="min-h-11 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white"
+                className="min-h-11 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 text-sm font-bold text-white shadow-lg shadow-amber-500/25"
               >
                 {t("students.addPair")}
               </button>

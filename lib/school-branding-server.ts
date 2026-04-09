@@ -8,13 +8,17 @@ export type SchoolBrandingDTO = {
 
 const DEFAULT_NAME = "Swim School";
 
-/** Satu kali per request RSC (metadata + layout memakai yang sama). */
+/** Satu kali per request RSC — hindari upsert tiap hit jika baris sudah ada. */
 export const ensureSchoolBrandingRow = cache(async function ensureSchoolBrandingRow(): Promise<void> {
-  await prisma.schoolBranding.upsert({
-    where: { id: 1 },
-    create: { id: 1, schoolName: DEFAULT_NAME, logoDataUrl: null },
-    update: {},
-  });
+  const exists = await prisma.schoolBranding.findUnique({ where: { id: 1 }, select: { id: true } });
+  if (exists) return;
+  try {
+    await prisma.schoolBranding.create({
+      data: { id: 1, schoolName: DEFAULT_NAME, logoDataUrl: null },
+    });
+  } catch {
+    /* race: baris dibuat request lain */
+  }
 });
 
 /** Hanya nama + logoVersion — untuk metadata/manifest tanpa memuat kolom logo (besar) dari DB. */

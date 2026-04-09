@@ -2,6 +2,19 @@
 
 import type { LevelBundle } from "@prisma/client";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import {
+  CalendarClock,
+  CalendarPlus,
+  ClipboardList,
+  LayoutGrid,
+  List,
+  Pencil,
+  Printer,
+  RefreshCw,
+  Search,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { coachCanTeachBundle, maxStudentsForBundle, occupancyRatio } from "@/lib/domain";
 import { useApp } from "@/lib/i18n-context";
 import { tailDayOptionsForMonth } from "@/lib/calendar-month-rules";
@@ -172,7 +185,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     return () => {
       cancel = true;
     };
-  }, [canEdit, scheduleYm?.y, scheduleYm?.m]);
+  }, [canEdit, scheduleYm]);
 
   /* ── data loading ───────────────────────────────────────────── */
   const load = useCallback(async () => {
@@ -473,26 +486,34 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       )}
 
       {!canEdit && (
-        <p className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--muted)]">
-          {t("schedule.coachReadOnly")}
-        </p>
+        <div className="pss-panel flex items-start gap-3 border-l-4 border-l-teal-500 px-4 py-3.5 text-sm text-[var(--text)]">
+          <CalendarClock className="mt-0.5 h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" />
+          <p>{t("schedule.coachReadOnly")}</p>
+        </div>
       )}
 
       {/* ── Range filters + actions ─────────────────────────── */}
-      <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:flex-wrap sm:items-end">
+      <div className="pss-panel flex flex-col gap-3 p-3 print:hidden sm:flex-row sm:flex-wrap sm:items-end">
         <label className="block flex-1 text-sm">
-          <span className="text-[var(--muted)]">{t("schedule.from")}</span>
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)]">
+            <CalendarClock className="h-3.5 w-3.5 text-sky-500" />
+            {t("schedule.from")}
+          </span>
           <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={fieldClass} />
         </label>
         <label className="block flex-1 text-sm">
-          <span className="text-[var(--muted)]">{t("schedule.to")}</span>
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--muted)]">
+            <CalendarClock className="h-3.5 w-3.5 text-cyan-500" />
+            {t("schedule.to")}
+          </span>
           <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={fieldClass} />
         </label>
         <button
           type="button"
           onClick={() => void load()}
-          className="min-h-11 rounded-xl border border-[var(--border)] px-4 text-sm font-medium active:bg-[var(--border)]/40"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-white px-4 text-sm font-semibold active:bg-sky-50 dark:bg-[var(--surface)]"
         >
+          <RefreshCw className="h-4 w-4 text-sky-500" />
           {t("schedule.reload")}
         </button>
         {canEdit && (
@@ -500,16 +521,18 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
             type="button"
             disabled={undoBusy}
             onClick={() => void handleClearAllJadwal()}
-            className="min-h-11 rounded-xl border border-[var(--danger)]/40 px-4 text-sm font-medium text-[var(--danger)] active:bg-[var(--danger)]/10 disabled:opacity-50"
+            className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-700 active:bg-red-100 disabled:opacity-50 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300"
           >
+            <Trash2 className="h-4 w-4" />
             {t("schedule.clearAllButton")}
           </button>
         )}
         <button
           type="button"
           onClick={() => window.print()}
-          className="min-h-11 rounded-xl border border-[var(--border)] px-4 text-sm font-medium active:bg-[var(--border)]/40"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--border)] bg-white px-4 text-sm font-semibold active:bg-slate-50 dark:bg-[var(--surface)]"
         >
+          <Printer className="h-4 w-4 text-[var(--muted)]" />
           {t("schedule.exportPrint")}
         </button>
       </div>
@@ -548,9 +571,16 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
         <section
           id="pss-session-editor"
           tabIndex={-1}
-          className="space-y-4 scroll-mt-20 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm print:hidden"
+          className="space-y-4 scroll-mt-20 rounded-3xl border border-sky-100 bg-[var(--surface)] p-5 shadow-xl print:hidden dark:border-[var(--border)]"
         >
-          <h2 className="text-base font-semibold">{editingId ? t("schedule.editSession") : t("schedule.addSession")}</h2>
+          <h2 className="flex items-center gap-2 text-base font-bold text-[var(--text)]">
+            {editingId ? (
+              <Pencil className="h-5 w-5 text-amber-500" />
+            ) : (
+              <CalendarPlus className="h-5 w-5 text-sky-500" />
+            )}
+            {editingId ? t("schedule.editSession") : t("schedule.addSession")}
+          </h2>
           <div className="grid gap-4">
             <label className="block text-sm">
               {t("schedule.dateWib")}
@@ -706,8 +736,9 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
             <button
               type="button"
               onClick={() => void loadSuggestions()}
-              className="min-h-11 rounded-xl border border-[var(--border)] px-4 text-sm font-medium"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 text-sm font-semibold text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-200"
             >
+              <Sparkles className="h-4 w-4" />
               {t("schedule.suggestSlots")}
             </button>
           </div>
@@ -736,34 +767,39 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
 
       {/* ── Search bar + view toggle ────────────────────────── */}
       <div className="flex flex-col gap-3 print:hidden sm:flex-row sm:items-center">
-        <input
-          type="text"
-          value={searchQ}
-          onChange={(e) => setSearchQ(e.target.value)}
-          placeholder={t("schedule.searchPlaceholder")}
-          className={`${fieldClass} mt-0 flex-1`}
-        />
-        <div className="flex gap-1 rounded-xl border border-[var(--border)] p-1">
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--muted)]" />
+          <input
+            type="text"
+            value={searchQ}
+            onChange={(e) => setSearchQ(e.target.value)}
+            placeholder={t("schedule.searchPlaceholder")}
+            className={`${fieldClass} mt-0 w-full pl-9`}
+          />
+        </div>
+        <div className="flex gap-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 shadow-sm">
           <button
             type="button"
             onClick={() => setViewMode("list")}
-            className={`pss-btn rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+            className={`pss-btn flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200 ${
               viewMode === "list"
-                ? "bg-[var(--accent)] text-white"
+                ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-600/20"
                 : "text-[var(--muted)] hover:text-[var(--text)]"
             }`}
           >
+            <List className="h-4 w-4" />
             {t("schedule.listView")}
           </button>
           <button
             type="button"
             onClick={() => setViewMode("timetable")}
-            className={`pss-btn rounded-lg px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+            className={`pss-btn flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors duration-200 ${
               viewMode === "timetable"
-                ? "bg-[var(--accent)] text-white"
+                ? "bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md shadow-sky-600/20"
                 : "text-[var(--muted)] hover:text-[var(--text)]"
             }`}
           >
+            <LayoutGrid className="h-4 w-4" />
             {t("schedule.timetableView")}
           </button>
         </div>
@@ -772,7 +808,10 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       {/* ── List view ───────────────────────────────────────── */}
       {viewMode === "list" && (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold">{t("schedule.sessionList")}</h2>
+          <h2 className="flex items-center gap-2 text-base font-bold text-[var(--text)]">
+            <ClipboardList className="h-5 w-5 text-sky-500" />
+            {t("schedule.sessionList")}
+          </h2>
           <ul className="pss-stagger space-y-3">
             {filteredSessions.map((s, idx) => {
               const cc = s.coachSecondaryId ? 2 : 1;
@@ -782,11 +821,11 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                 <li
                   key={s.id}
                   style={{ "--pss-delay": `${Math.min(idx, 12) * 40}ms` } as CSSProperties}
-                  className="pss-card-lift rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm"
+                  className="pss-card-lift rounded-2xl border border-zinc-200/70 bg-[var(--surface)] p-4 shadow-sm dark:border-zinc-700/80"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <p className="text-lg font-bold text-[var(--accent)]">
+                      <p className="text-lg font-bold text-sky-600 dark:text-sky-400">
                         {formatDateId(s.date.slice(0, 10))} · {s.hour}:00
                       </p>
                       <p className="text-sm text-[var(--muted)]">
@@ -839,7 +878,10 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       {/* ── Timetable view ──────────────────────────────────── */}
       {viewMode === "timetable" && (
         <section className="space-y-6">
-          <h2 className="text-base font-semibold">{t("schedule.sessionList")}</h2>
+          <h2 className="flex items-center gap-2 text-base font-bold text-[var(--text)]">
+            <LayoutGrid className="h-5 w-5 text-teal-500" />
+            {t("schedule.sessionList")}
+          </h2>
           {timetableData.map(([dateStr, dateSessions]) => {
             const hours = [...new Set(dateSessions.map((s) => s.hour))].sort((a, b) => a - b);
             const lanes = [1, 2, 3, 4];
