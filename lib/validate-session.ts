@@ -1,10 +1,10 @@
-import type { LevelBundle, PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import {
   coachCanAssistBundle,
   coachCanTeachBundle,
-  laneAllowedForBundle,
-  levelsAllowedForBundle,
-  maxStudentsForBundle,
+  laneAllowedForDef,
+  maxStudentsForDef,
+  parseBundleDefRow,
 } from "@/lib/domain";
 import { calendarWibDateAllowsSessions } from "@/lib/calendar-month-rules";
 import { formatIsoDateInWIB } from "@/lib/dates";
@@ -14,6 +14,7 @@ export type SessionValidationError =
   | { code: "CALENDAR_TAIL_CLOSED" }
   | { code: "OUTSIDE_OPERATING_HOURS" }
   | { code: "LANE_BUNDLE_MISMATCH" }
+  | { code: "BUNDLE_NOT_FOUND" }
   | { code: "COACH_PRIMARY_INVALID" }
   | { code: "COACH_SECONDARY_NOT_FOUND" }
   | { code: "COACH_SECONDARY_INVALID" }
@@ -31,7 +32,7 @@ export async function validateScheduledSession(
     date: Date;
     hour: number;
     lane: number;
-    bundle: LevelBundle;
+    bundleId: string;
     coachPrimaryId: string;
     coachSecondaryId: string | null;
     enrollmentStudentIds: string[];
@@ -39,6 +40,13 @@ export async function validateScheduledSession(
   }
 ): Promise<SessionValidationError[]> {
   const errors: SessionValidationError[] = [];
+
+  const bundleRow = await db.sessionBundleDefinition.findUnique({ where: { id: input.bundleId } });
+  if (!bundleRow) {
+    errors.push({ code: "BUNDLE_NOT_FOUND" });
+    return errors;
+  }
+  const def = parseBundleDefRow(bundleRow);
 
   const dayIso = formatIsoDateInWIB(input.date);
   if (!(await calendarWibDateAllowsSessions(db, dayIso))) {
@@ -48,7 +56,7 @@ export async function validateScheduledSession(
     errors.push({ code: "OUTSIDE_OPERATING_HOURS" });
   }
 
-  if (!laneAllowedForBundle(input.bundle, input.lane)) {
+  if (!laneAllowedForDef(def, input.lane)) {
     errors.push({ code: "LANE_BUNDLE_MISMATCH" });
   }
 
@@ -57,7 +65,7 @@ export async function validateScheduledSession(
     ? await db.coach.findUnique({ where: { id: input.coachSecondaryId } })
     : null;
 
-  if (!primary || !coachCanTeachBundle(primary.teachLevels, input.bundle)) {
+  if (!primary || !coachCanTeachBundle(primary.teachLevels, def)) {
     errors.push({ code: "COACH_PRIMARY_INVALID" });
   }
   if (input.coachSecondaryId) {
@@ -65,18 +73,18 @@ export async function validateScheduledSession(
       errors.push({ code: "COACH_SECONDARY_NOT_FOUND" });
     } else if (input.coachSecondaryId === input.coachPrimaryId) {
       errors.push({ code: "COACH_DUPLICATE" });
-    } else if (!coachCanAssistBundle(secondary.teachLevels, secondary.traineeLevels, input.bundle)) {
+    } else if (!coachCanAssistBundle(secondary.teachLevels, secondary.traineeLevels, def)) {
       errors.push({ code: "COACH_SECONDARY_INVALID" });
     }
   }
 
   const coachCount: 1 | 2 = input.coachSecondaryId ? 2 : 1;
-  const maxStudents = maxStudentsForBundle(input.bundle, coachCount);
+  const maxStudents = maxStudentsForDef(def, coachCount);
   if (input.enrollmentStudentIds.length > maxStudents) {
     errors.push({ code: "ENROLLMENT_OVER_CAPACITY" });
   }
 
-  const allowedLevels = new Set(levelsAllowedForBundle(input.bundle));
+  const allowedLevelIds = new Set(def.levelIds);
   const students = await db.student.findMany({
     where: { id: { in: input.enrollmentStudentIds } },
   });
@@ -86,7 +94,7 @@ export async function validateScheduledSession(
     if (seen.has(sid)) errors.push({ code: "STUDENT_SAME_SESSION_TWICE", studentId: sid });
     seen.add(sid);
     const st = byId.get(sid);
-    if (!st || !allowedLevels.has(st.level)) {
+    if (!st || !allowedLevelIds.has(st.levelId)) {
       errors.push({ code: "STUDENT_LEVEL_MISMATCH", studentId: sid });
     }
   }
@@ -99,9 +107,9 @@ export async function validateScheduledSession(
     },
   });
 
-  if (input.bundle === "MIXED_1_3") {
-    const countL13 = sameSlot.filter((s) => s.bundle === "MIXED_1_3" && s.lane === 1).length;
-    if (countL13 >= 2) {
+  if (def.maxConcurrentSessionsOnLane1 != null && input.lane === 1) {
+    const count = sameSlot.filter((s) => s.bundleId === input.bundleId && s.lane === 1).length;
+    if (count >= def.maxConcurrentSessionsOnLane1) {
       errors.push({ code: "LANE1_TOO_MANY_CLASSES" });
     }
   } else {

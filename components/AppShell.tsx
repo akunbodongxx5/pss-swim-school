@@ -94,7 +94,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
       </header>
 
       <main
-        className="mx-auto w-full max-w-lg flex-1 px-4 pb-28 pt-4"
+        className="mx-auto min-w-0 w-full max-w-lg flex-1 px-3 pb-28 pt-4 sm:px-4"
         style={{ paddingBottom: "max(7rem, calc(5.5rem + env(safe-area-inset-bottom)))" }}
       >
         <div key={pathname}>

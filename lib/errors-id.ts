@@ -5,7 +5,8 @@ const MAP: Record<SessionValidationError["code"], string> = {
     "Tanggal 29–31 default libur (minggu ke-5). Atur pengecualian di Jadwal → ekor bulan untuk bulan ini.",
   OUTSIDE_OPERATING_HOURS:
     "Jam mulai tidak diizinkan: Sen–Jum 13:00–18:00 (mulai terakhir 17:00), Sab–Min 08:00–16:00 (mulai terakhir 15:00) WIB.",
-  LANE_BUNDLE_MISMATCH: "Lintasan tidak cocok dengan bundle level (1–3 hanya line 1; 4–9 line 2–4).",
+  LANE_BUNDLE_MISMATCH: "Lintasan tidak cocok dengan aturan bundle kelas ini.",
+  BUNDLE_NOT_FOUND: "Bundle kelas tidak ditemukan atau sudah dihapus.",
   COACH_PRIMARY_INVALID: "Pelatih utama tidak mencakup seluruh level bundle.",
   COACH_SECONDARY_NOT_FOUND: "Pelatih kedua tidak ditemukan.",
   COACH_SECONDARY_INVALID:

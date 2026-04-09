@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { ImagePlus, Save, Type } from "lucide-react";
+import { SessionBundlesManager } from "@/components/SessionBundlesManager";
 import { useBranding } from "@/lib/branding-context";
 import { useApp } from "@/lib/i18n-context";
 import type { SchoolBrandingDTO } from "@/lib/school-branding-server";
@@ -159,6 +160,8 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
           </div>
         ) : null}
       </div>
+
+      <SessionBundlesManager />
 
       {message ? (
         <p className={`text-sm ${message.kind === "ok" ? "text-green-600 dark:text-green-400" : "text-[var(--danger)]"}`}>

@@ -1,11 +1,11 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import {
-  disjointTraineeFromLead,
-  normalizeTeachLevels,
-  serializeTeachLevels,
-  serializeTraineeLevels,
-} from "@/lib/domain";
+  disjointTraineeFromLeadIds,
+  normalizeLevelIdList,
+  serializeLevelIdList,
+} from "@/lib/bundle-def";
+import { assertSwimLevelIdsValid, SCHOOL_ID } from "@/lib/swim-level-guards";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -25,18 +25,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nama wajib." }, { status: 400 });
   }
 
-  let teachLevels = normalizeTeachLevels(body.teachLevels);
+  const allLevels = await prisma.swimLevel.findMany({
+    where: { schoolId: SCHOOL_ID },
+    orderBy: { sortOrder: "asc" },
+  });
+  const allIds = allLevels.map((l) => l.id);
+
+  let teachLevels = normalizeLevelIdList(body.teachLevels);
   if (teachLevels.length === 0) {
-    teachLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    teachLevels = [...allIds];
   }
-  const traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels(body.traineeLevels));
+  if (!(await assertSwimLevelIdsValid(prisma, teachLevels))) {
+    return NextResponse.json({ error: "Ada id level yang tidak valid." }, { status: 400 });
+  }
+
+  const traineeLevels = disjointTraineeFromLeadIds(teachLevels, normalizeLevelIdList(body.traineeLevels));
 
   const created = await prisma.coach
     .create({
       data: {
         name,
-        teachLevels: serializeTeachLevels(teachLevels),
-        traineeLevels: serializeTraineeLevels(traineeLevels),
+        teachLevels: serializeLevelIdList(teachLevels),
+        traineeLevels: serializeLevelIdList(traineeLevels),
       },
     })
     .catch(() => null);
@@ -73,29 +83,32 @@ export async function PATCH(req: Request) {
     data.name = n;
   }
 
-  let teachLevels = normalizeTeachLevels(existing.teachLevels);
+  let teachLevels = normalizeLevelIdList(existing.teachLevels);
   if (body.teachLevels !== undefined) {
-    teachLevels = normalizeTeachLevels(body.teachLevels);
+    teachLevels = normalizeLevelIdList(body.teachLevels);
     if (teachLevels.length === 0) {
-      return NextResponse.json({ error: "Pilih minimal satu level (1–9)." }, { status: 400 });
+      return NextResponse.json({ error: "Pilih minimal satu level (lead)." }, { status: 400 });
+    }
+    if (!(await assertSwimLevelIdsValid(prisma, teachLevels))) {
+      return NextResponse.json({ error: "Ada id level yang tidak valid." }, { status: 400 });
     }
   }
 
-  /** Trainee dari body jika ada; kalau lead berubah tanpa trainee di body, disjoint trainee lama ke lead baru. */
-  let traineeLevels: number[];
-  if (body.traineeLevels !== undefined) {
-    traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels(body.traineeLevels));
-  } else if (body.teachLevels !== undefined) {
-    traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels(existing.traineeLevels));
-  } else {
-    traineeLevels = disjointTraineeFromLead(teachLevels, normalizeTeachLevels(existing.traineeLevels));
+  const traineeRaw =
+    body.traineeLevels !== undefined
+      ? normalizeLevelIdList(body.traineeLevels)
+      : normalizeLevelIdList(existing.traineeLevels);
+  if (traineeRaw.length > 0 && !(await assertSwimLevelIdsValid(prisma, traineeRaw))) {
+    return NextResponse.json({ error: "Ada id level trainee yang tidak valid." }, { status: 400 });
   }
 
+  const traineeLevels = disjointTraineeFromLeadIds(teachLevels, traineeRaw);
+
   if (body.teachLevels !== undefined) {
-    data.teachLevels = serializeTeachLevels(teachLevels);
+    data.teachLevels = serializeLevelIdList(teachLevels);
   }
   if (body.traineeLevels !== undefined || body.teachLevels !== undefined) {
-    data.traineeLevels = serializeTraineeLevels(traineeLevels);
+    data.traineeLevels = serializeLevelIdList(traineeLevels);
   }
 
   if (Object.keys(data).length === 0) {

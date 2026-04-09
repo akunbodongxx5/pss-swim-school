@@ -1,5 +1,6 @@
-import type { LevelBundle, PrismaClient } from "@prisma/client";
+import type { PrismaClient, SessionBundleDefinition } from "@prisma/client";
 import { coachCanTeachBundle } from "@/lib/domain";
+import { parseBundleDefRow } from "@/lib/bundle-def";
 import { calendarDateFromIso } from "@/lib/dates";
 import { calendarWibDateAllowsSessions } from "@/lib/calendar-month-rules";
 import { sessionStartHoursForWibCalendarDate } from "@/lib/operating-hours";
@@ -8,7 +9,7 @@ export type OpenSlotSuggestion = {
   date: string;
   hour: number;
   lane: number;
-  bundle: LevelBundle;
+  bundleId: string;
   coachPrimaryId: string;
   coachSecondaryId: null;
   score: number;
@@ -22,7 +23,7 @@ export type OpenSlotSuggestion = {
 export async function suggestOpenSlots(
   db: PrismaClient,
   opts: {
-    bundle: LevelBundle;
+    bundleRow: SessionBundleDefinition;
     isoDate: string;
     /** Default: mengikuti jam operasional per hari (WIB). */
     hours?: number[];
@@ -31,11 +32,12 @@ export async function suggestOpenSlots(
   if (!(await calendarWibDateAllowsSessions(db, opts.isoDate))) {
     return [];
   }
+  const def = parseBundleDefRow(opts.bundleRow);
   const date = calendarDateFromIso(opts.isoDate);
   const hours = opts.hours ?? sessionStartHoursForWibCalendarDate(opts.isoDate);
 
   const coaches = await db.coach.findMany();
-  const eligible = coaches.filter((c) => coachCanTeachBundle(c.teachLevels, opts.bundle));
+  const eligible = coaches.filter((c) => coachCanTeachBundle(c.teachLevels, def));
   if (eligible.length === 0) return [];
 
   const weekStart = startOfWeekMondayUtc(date);
@@ -65,38 +67,25 @@ export async function suggestOpenSlots(
   });
 
   const suggestions: OpenSlotSuggestion[] = [];
+  const allowedLanes = def.allowedLanes.length ? def.allowedLanes : [1];
 
   for (const hour of hours) {
     const busyCoachIds = busyCoachesAt(sessionsDay, hour);
-    const lane13Count = countMixed13OnLane1(sessionsDay, hour);
 
     for (const coach of eligible) {
       if (busyCoachIds.has(coach.id)) continue;
 
-      if (opts.bundle === "MIXED_1_3") {
-        if (lane13Count >= 2) continue;
+      for (const lane of allowedLanes) {
+        if (!canPlaceBundleOnLane(def, sessionsDay, hour, lane, opts.bundleRow.id)) continue;
         suggestions.push({
           date: opts.isoDate,
           hour,
-          lane: 1,
-          bundle: opts.bundle,
+          lane,
+          bundleId: opts.bundleRow.id,
           coachPrimaryId: coach.id,
           coachSecondaryId: null,
-          score: -((coachLoad.get(coach.id) ?? 0) * 100) + hour,
-          reason: `Line 1: slot ${hour}:00, pelatih ${coach.name} bebas; beban mingguan relatif rendah.`,
-        });
-      } else {
-        const freeLane = pickFreeLane23(sessionsDay, hour);
-        if (freeLane === null) continue;
-        suggestions.push({
-          date: opts.isoDate,
-          hour,
-          lane: freeLane,
-          bundle: opts.bundle,
-          coachPrimaryId: coach.id,
-          coachSecondaryId: null,
-          score: -((coachLoad.get(coach.id) ?? 0) * 100) + hour + freeLane,
-          reason: `Lintasan ${freeLane}: slot ${hour}:00, pelatih ${coach.name} bebas.`,
+          score: -((coachLoad.get(coach.id) ?? 0) * 100) + hour + lane * 0.01,
+          reason: `Lintasan ${lane}: slot ${hour}:00, pelatih ${coach.name} bebas.`,
         });
       }
     }
@@ -104,6 +93,25 @@ export async function suggestOpenSlots(
 
   suggestions.sort((a, b) => b.score - a.score);
   return suggestions.slice(0, 24);
+}
+
+function canPlaceBundleOnLane(
+  def: ReturnType<typeof parseBundleDefRow>,
+  sessions: { hour: number; lane: number; bundleId: string }[],
+  hour: number,
+  lane: number,
+  bundleId: string
+): boolean {
+  if (!def.allowedLanes.includes(lane)) return false;
+
+  if (def.maxConcurrentSessionsOnLane1 != null && lane === 1) {
+    const count = sessions.filter(
+      (s) => s.hour === hour && s.lane === 1 && s.bundleId === bundleId
+    ).length;
+    return count < def.maxConcurrentSessionsOnLane1;
+  }
+
+  return !sessions.some((s) => s.hour === hour && s.lane === lane);
 }
 
 function busyCoachesAt(sessions: { hour: number; coachPrimaryId: string; coachSecondaryId: string | null }[], hour: number) {
@@ -114,24 +122,6 @@ function busyCoachesAt(sessions: { hour: number; coachPrimaryId: string; coachSe
     if (s.coachSecondaryId) set.add(s.coachSecondaryId);
   }
   return set;
-}
-
-function countMixed13OnLane1(
-  sessions: { hour: number; lane: number; bundle: LevelBundle }[],
-  hour: number
-) {
-  return sessions.filter((s) => s.hour === hour && s.lane === 1 && s.bundle === "MIXED_1_3").length;
-}
-
-function pickFreeLane23(
-  sessions: { hour: number; lane: number }[],
-  hour: number
-): number | null {
-  const used = new Set(sessions.filter((s) => s.hour === hour).map((s) => s.lane));
-  for (const ln of [2, 3, 4]) {
-    if (!used.has(ln)) return ln;
-  }
-  return null;
 }
 
 function utcDayStart(d: Date): Date {

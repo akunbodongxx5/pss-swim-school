@@ -5,7 +5,10 @@ import { orderedPair } from "@/lib/conflicts";
 
 export async function GET() {
   const pairs = await prisma.conflictPair.findMany({
-    include: { studentA: true, studentB: true },
+    include: {
+      studentA: { include: { swimLevel: true } },
+      studentB: { include: { swimLevel: true } },
+    },
     orderBy: { id: "asc" },
   });
   return NextResponse.json(pairs);
@@ -24,7 +27,10 @@ export async function POST(req: Request) {
   const p = await prisma.conflictPair
     .create({
       data: { studentAId: a, studentBId: b },
-      include: { studentA: true, studentB: true },
+      include: {
+      studentA: { include: { swimLevel: true } },
+      studentB: { include: { swimLevel: true } },
+    },
     })
     .catch(() => null);
   if (!p) return NextResponse.json({ error: "Pasangan sudah ada atau gagal menyimpan." }, { status: 400 });

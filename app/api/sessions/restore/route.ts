@@ -1,4 +1,4 @@
-import type { LevelBundle, PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -10,7 +10,7 @@ type Row = {
   date: string;
   hour: number;
   lane: number;
-  bundle: string;
+  bundleId: string;
   coachPrimaryId: string;
   coachSecondaryId: string | null;
   studentIds: string[];
@@ -37,14 +37,13 @@ export async function POST(req: Request) {
       const txDb = tx as unknown as PrismaClient;
       for (const s of sessions) {
         const date = calendarDateFromIso(s.date);
-        const bundle = s.bundle as LevelBundle;
         const studentIds = s.studentIds ?? [];
         const secId = s.coachSecondaryId ?? null;
         const val = await validateScheduledSession(txDb, {
           date,
           hour: s.hour,
           lane: s.lane,
-          bundle,
+          bundleId: s.bundleId,
           coachPrimaryId: s.coachPrimaryId,
           coachSecondaryId: secId,
           enrollmentStudentIds: studentIds,
@@ -62,7 +61,7 @@ export async function POST(req: Request) {
             date,
             hour: s.hour,
             lane: s.lane,
-            bundle,
+            bundleId: s.bundleId,
             coachPrimaryId: s.coachPrimaryId,
             coachSecondaryId: secId,
             enrollments: {

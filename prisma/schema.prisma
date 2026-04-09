@@ -7,30 +7,62 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum LevelBundle {
-  MIXED_1_3
-  LEVEL_4
-  MIXED_5_6
-  LEVEL_7
-  MIXED_8_9
-}
-
 /// Satu baris global (id = 1): nama & logo sekolah untuk white-label.
 model SchoolBranding {
   id          Int     @id @default(1)
   schoolName  String  @default("Swim School")
-  /// data:image/...;base64,... atau SVG UTF-8 — null = tanpa logo
   logoDataUrl String? @db.Text
-  /// Increment setiap kali logo berubah — dipakai sebagai cache-buster di manifest PWA
   logoVersion Int     @default(1)
+
+  swimLevels     SwimLevel[]
+  sessionBundles SessionBundleDefinition[]
+}
+
+/// Level renang per sekolah (urutan & nama bebas, maks. 20 per sekolah — ditegakkan di API).
+model SwimLevel {
+  id        String @id @default(cuid())
+  schoolId  Int    @default(1)
+  sortOrder Int
+  name      String
+
+  school   SchoolBranding @relation(fields: [schoolId], references: [id])
+  students Student[]
+
+  @@unique([schoolId, sortOrder])
+  @@index([schoolId])
+}
+
+/// Bundle kelas: level mana saja + aturan lintasan & kapasitas (dapat dikustom per sekolah).
+model SessionBundleDefinition {
+  id        String @id @default(cuid())
+  schoolId  Int    @default(1)
+  /// Kunci stabil untuk seed/migrasi, mis. MIXED_1_3
+  slug      String
+  name      String
+  sortOrder Int
+  /// JSON array id SwimLevel, mis. ["clxxx","clyyy"]
+  levelIds  String @db.Text
+  /// JSON array lintasan diizinkan, mis. [1] atau [2,3,4]
+  allowedLanesJson String @db.Text
+
+  maxStudents1Coach Int
+  maxStudents2Coach Int
+  /// null = tidak ada aturan khusus; mis. 2 = maks 2 kelas bundle ini di line 1 pada jam sama
+  maxConcurrentSessionsOnLane1 Int?
+
+  school   SchoolBranding @relation(fields: [schoolId], references: [id])
+  sessions ScheduledSession[]
+
+  @@unique([schoolId, slug])
+  @@index([schoolId])
 }
 
 model Coach {
   id   String @id @default(cuid())
   name String
-  /// Level sebagai lead (pelatih utama). JSON array teks, mis. "[1,2,3,4,5,6]".
-  teachLevels String @default("[1,2,3,4,5,6,7,8,9]")
-  /// Level hanya sebagai pelatih kedua (trainee); tidak boleh di lead. Disjoint dari teachLevels.
+  /// JSON array id SwimLevel (lead).
+  teachLevels String @default("[]")
+  /// JSON array id SwimLevel (trainee / pelatih kedua saja).
   traineeLevels String @default("[]")
 
   sessionsPrimary   ScheduledSession[] @relation("CoachPrimary")
@@ -38,9 +70,10 @@ model Coach {
 }
 
 model Student {
-  id     String @id @default(cuid())
-  name   String
-  level  Int
+  id        String    @id @default(cuid())
+  name      String
+  levelId   String
+  swimLevel SwimLevel @relation(fields: [levelId], references: [id], onDelete: Restrict)
 
   enrollments Enrollment[]
   conflictsA  ConflictPair[] @relation("ConflictA")
@@ -48,7 +81,6 @@ model Student {
   waitlist    WaitlistEntry[]
 }
 
-/// Pasangan murid yang tidak boleh punya sesi di hari yang sama (satu lokasi).
 model ConflictPair {
   id         String  @id @default(cuid())
   studentAId String
@@ -60,23 +92,23 @@ model ConflictPair {
 }
 
 model ScheduledSession {
-  id                 String       @id @default(cuid())
-  /// Disimpan sebagai UTC midnight untuk tanggal kalender (logika tampilan pakai WIB).
-  date               DateTime
-  /// Jam mulai 0–23 (WIB).
-  hour               Int
-  /// Line 1 untuk 1–3; line 2–4 untuk level lebih tinggi.
-  lane               Int
-  bundle             LevelBundle
-  coachPrimaryId     String
-  coachSecondaryId   String?
-  coachPrimary       Coach        @relation("CoachPrimary", fields: [coachPrimaryId], references: [id])
-  coachSecondary     Coach?       @relation("CoachSecondary", fields: [coachSecondaryId], references: [id])
-  enrollments        Enrollment[]
+  id             String                  @id @default(cuid())
+  date           DateTime
+  hour           Int
+  lane           Int
+  bundleId       String
+  bundle         SessionBundleDefinition @relation(fields: [bundleId], references: [id], onDelete: Restrict)
+  coachPrimaryId String
+  coachSecondaryId String?
+  coachPrimary     Coach   @relation("CoachPrimary", fields: [coachPrimaryId], references: [id])
+  coachSecondary   Coach?  @relation("CoachSecondary", fields: [coachSecondaryId], references: [id])
+  enrollments      Enrollment[]
+
+  @@index([bundleId])
 }
 
 model Enrollment {
-  id                 String @id @default(cuid())
+  id                 String           @id @default(cuid())
   scheduledSessionId String
   studentId          String
   student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
@@ -94,12 +126,10 @@ model WaitlistEntry {
   createdAt DateTime @default(now())
 }
 
-/// Pengecualian: tanggal 29–31 default tanpa kelas; isi openTailDays (JSON array) untuk membuka tanggal tertentu di bulan itu.
 model ScheduleMonthConfig {
-  id   String @id @default(cuid())
-  year  Int
-  month Int
-  /// JSON array angka 29|30|31, mis. "[29,30]"
+  id           String @id @default(cuid())
+  year         Int
+  month        Int
   openTailDays String @default("[]")
 
   @@unique([year, month])

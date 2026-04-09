@@ -1,4 +1,3 @@
-import { LevelBundle } from "@prisma/client";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -25,9 +24,10 @@ export async function GET(req: Request) {
     where: { date: { gte: start, lte: end } },
     orderBy: [{ date: "asc" }, { hour: "asc" }, { lane: "asc" }],
     include: {
+      bundle: true,
       coachPrimary: true,
       coachSecondary: true,
-      enrollments: { include: { student: true } },
+      enrollments: { include: { student: { include: { swimLevel: true } } } },
     },
   });
   return NextResponse.json(sessions);
@@ -44,14 +44,14 @@ export async function POST(req: Request) {
     date: string;
     hour: number;
     lane: number;
-    bundle: LevelBundle;
+    bundleId: string;
     coachPrimaryId: string;
     coachSecondaryId: string | null;
     studentIds: string[];
     confirmConflict?: boolean;
   };
 
-  if (!body.date || typeof body.hour !== "number" || !body.bundle || !body.coachPrimaryId) {
+  if (!body.date || typeof body.hour !== "number" || !body.bundleId || !body.coachPrimaryId) {
     return NextResponse.json({ error: "Data sesi tidak lengkap." }, { status: 400 });
   }
 
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     date,
     hour: body.hour,
     lane: body.lane,
-    bundle: body.bundle,
+    bundleId: body.bundleId,
     coachPrimaryId: body.coachPrimaryId,
     coachSecondaryId: body.coachSecondaryId ?? null,
     enrollmentStudentIds: body.studentIds ?? [],
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       date,
       hour: body.hour,
       lane: body.lane,
-      bundle: body.bundle,
+      bundleId: body.bundleId,
       coachPrimaryId: body.coachPrimaryId,
       coachSecondaryId: body.coachSecondaryId ?? null,
       enrollments: {
@@ -102,9 +102,10 @@ export async function POST(req: Request) {
       },
     },
     include: {
+      bundle: true,
       coachPrimary: true,
       coachSecondary: true,
-      enrollments: { include: { student: true } },
+      enrollments: { include: { student: { include: { swimLevel: true } } } },
     },
   });
 
@@ -131,7 +132,7 @@ export async function PATCH(req: Request) {
     date: string;
     hour: number;
     lane: number;
-    bundle: LevelBundle;
+    bundleId: string;
     coachPrimaryId: string;
     coachSecondaryId: string | null;
     studentIds: string[];
@@ -141,7 +142,7 @@ export async function PATCH(req: Request) {
   const date = body.date ? calendarDateFromIso(body.date) : existing.date;
   const hour = body.hour ?? existing.hour;
   const lane = body.lane ?? existing.lane;
-  const bundle = body.bundle ?? existing.bundle;
+  const bundleId = body.bundleId ?? existing.bundleId;
   const coachPrimaryId = body.coachPrimaryId ?? existing.coachPrimaryId;
   const coachSecondaryId =
     body.coachSecondaryId === undefined ? existing.coachSecondaryId : body.coachSecondaryId;
@@ -151,7 +152,7 @@ export async function PATCH(req: Request) {
     date,
     hour,
     lane,
-    bundle,
+    bundleId,
     coachPrimaryId,
     coachSecondaryId,
     enrollmentStudentIds: studentIds,
@@ -190,15 +191,16 @@ export async function PATCH(req: Request) {
       date,
       hour,
       lane,
-      bundle,
+      bundleId,
       coachPrimaryId,
       coachSecondaryId,
       enrollments: { create: studentIds.map((studentId) => ({ studentId })) },
     },
     include: {
+      bundle: true,
       coachPrimary: true,
       coachSecondary: true,
-      enrollments: { include: { student: true } },
+      enrollments: { include: { student: { include: { swimLevel: true } } } },
     },
   });
 

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "r
 import { Eye, GitMerge, Search, UserPlus, Users, UserX } from "lucide-react";
 import { useApp } from "@/lib/i18n-context";
 
-type Student = { id: string; name: string; level: number };
+type SwimLevelRow = { id: string; name: string; sortOrder: number };
+type Student = { id: string; name: string; levelId: string; swimLevel?: SwimLevelRow };
 type Pair = {
   id: string;
   studentAId: string;
@@ -13,11 +14,12 @@ type Pair = {
   studentB: Student;
 };
 
-function LevelBadge({ level }: { level: number }) {
+function LevelBadge({ name, sortOrder }: { name: string; sortOrder: number }) {
+  const tier = sortOrder <= 3 ? 1 : sortOrder <= 6 ? 2 : 3;
   const color =
-    level <= 3
+    tier === 1
       ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-      : level <= 6
+      : tier === 2
         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
         : "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300";
 
@@ -25,7 +27,7 @@ function LevelBadge({ level }: { level: number }) {
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold leading-5 ${color}`}
     >
-      L{level}
+      {name}
     </span>
   );
 }
@@ -57,9 +59,10 @@ function EmptyState({ message }: { message: string }) {
 export function MuridClient({ canEdit }: { canEdit: boolean }) {
   const { t } = useApp();
   const [students, setStudents] = useState<Student[]>([]);
+  const [levels, setLevels] = useState<SwimLevelRow[]>([]);
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [name, setName] = useState("");
-  const [level, setLevel] = useState(1);
+  const [levelId, setLevelId] = useState("");
   const [a, setA] = useState("");
   const [b, setB] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
@@ -67,7 +70,7 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
-  const [editLevel, setEditLevel] = useState(1);
+  const [editLevelId, setEditLevelId] = useState("");
   const [savingStudentId, setSavingStudentId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(true);
@@ -87,12 +90,19 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
     "min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-[var(--text)]";
 
   const load = useCallback(async () => {
-    const [st, pr] = await Promise.all([
+    const [st, pr, lv] = await Promise.all([
       fetch("/api/students").then((r) => r.json()),
       fetch("/api/conflicts").then((r) => r.json()),
+      fetch("/api/swim-levels").then((r) => r.json()),
     ]);
+    const levelRows = Array.isArray(lv) ? lv : [];
+    setLevels(levelRows.sort((x: SwimLevelRow, y: SwimLevelRow) => x.sortOrder - y.sortOrder));
     setStudents(st);
     setPairs(pr);
+    setLevelId((prev) => {
+      if (prev && st.some((s: Student) => s.levelId === prev)) return prev;
+      return levelRows[0]?.id ?? "";
+    });
     setA((prev) => (prev && st.some((s: Student) => s.id === prev) ? prev : st[0]?.id ?? ""));
     setB((prev) => (prev && st.some((s: Student) => s.id === prev) ? prev : st[1]?.id ?? st[0]?.id ?? ""));
   }, []);
@@ -105,7 +115,7 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
   function startEdit(s: Student) {
     setEditingId(s.id);
     setEditName(s.name);
-    setEditLevel(s.level);
+    setEditLevelId(s.levelId);
     setErr(null);
     setMsg(null);
   }
@@ -122,7 +132,7 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
     const r = await fetch(`/api/students?id=${encodeURIComponent(editingId)}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editName.trim(), level: editLevel }),
+      body: JSON.stringify({ name: editName.trim(), levelId: editLevelId }),
     });
     const data = await r.json();
     setSavingStudentId(null);
@@ -138,10 +148,14 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
   async function addStudent(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    if (!levelId) {
+      setErr(t("students.fail"));
+      return;
+    }
     const r = await fetch("/api/students", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, level }),
+      body: JSON.stringify({ name, levelId }),
     });
     const data = await r.json();
     if (!r.ok) {
@@ -150,7 +164,6 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
     }
     setMsg(t("students.added"));
     setName("");
-    setLevel(1);
     await load();
   }
 
@@ -236,16 +249,19 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
                       className={inputClass}
                       placeholder={t("students.namePlaceholder")}
                     />
-                    <label className="flex items-center gap-3 text-sm">
+                    <label className="block text-sm">
                       <span className="text-[var(--muted)]">{t("students.level")}</span>
-                      <input
-                        type="number"
-                        min={1}
-                        max={9}
-                        value={editLevel}
-                        onChange={(e) => setEditLevel(Number(e.target.value))}
-                        className="h-11 w-20 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3"
-                      />
+                      <select
+                        value={editLevelId}
+                        onChange={(e) => setEditLevelId(e.target.value)}
+                        className={fieldClass}
+                      >
+                        {levels.map((lv) => (
+                          <option key={lv.id} value={lv.id}>
+                            {lv.name}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -269,7 +285,10 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
                   <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-2">
                       <span className="font-medium">{s.name}</span>
-                      <LevelBadge level={s.level} />
+                      <LevelBadge
+                        name={s.swimLevel?.name ?? s.levelId.slice(0, 8)}
+                        sortOrder={s.swimLevel?.sortOrder ?? 99}
+                      />
                     </span>
                     {canEdit && (
                       <div className="flex gap-2">
@@ -312,16 +331,15 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
                 className={inputClass}
                 required
               />
-              <label className="flex items-center gap-3 text-sm">
+              <label className="block text-sm">
                 <span className="text-[var(--muted)]">{t("students.level")}</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={9}
-                  value={level}
-                  onChange={(e) => setLevel(Number(e.target.value))}
-                  className="h-11 w-20 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3"
-                />
+                <select value={levelId} onChange={(e) => setLevelId(e.target.value)} className={fieldClass}>
+                  {levels.map((lv) => (
+                    <option key={lv.id} value={lv.id}>
+                      {lv.name}
+                    </option>
+                  ))}
+                </select>
               </label>
               <button
                 type="submit"

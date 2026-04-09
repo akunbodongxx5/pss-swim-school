@@ -1,6 +1,5 @@
 "use client";
 
-import type { LevelBundle } from "@prisma/client";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   CalendarClock,
@@ -18,8 +17,9 @@ import {
 import {
   coachCanAssistBundle,
   coachCanTeachBundle,
-  maxStudentsForBundle,
+  maxStudentsForDef,
   occupancyRatio,
+  parseBundleDefRow,
 } from "@/lib/domain";
 import { useApp } from "@/lib/i18n-context";
 import { tailDayOptionsForMonth } from "@/lib/calendar-month-rules";
@@ -32,19 +32,41 @@ import {
 } from "@/lib/schedule-undo";
 
 type Coach = { id: string; name: string; teachLevels: unknown; traineeLevels?: unknown };
-type Student = { id: string; name: string; level: number };
+type ApiBundle = {
+  id: string;
+  schoolId: number;
+  slug: string;
+  name: string;
+  sortOrder: number;
+  levelIds: string;
+  allowedLanesJson: string;
+  maxStudents1Coach: number;
+  maxStudents2Coach: number;
+  maxConcurrentSessionsOnLane1: number | null;
+};
+type Student = {
+  id: string;
+  name: string;
+  levelId: string;
+  swimLevel?: { name: string; sortOrder: number };
+};
 type SessionRow = {
   id: string;
   date: string;
   hour: number;
   lane: number;
-  bundle: LevelBundle;
+  bundleId: string;
+  bundle: ApiBundle;
   coachPrimaryId: string;
   coachSecondaryId: string | null;
   coachPrimary: Coach;
   coachSecondary: Coach | null;
   enrollments: { student: Student }[];
 };
+
+function maxCapForBundleRow(bundle: ApiBundle, coachCount: 1 | 2): number {
+  return maxStudentsForDef(parseBundleDefRow(bundle), coachCount);
+}
 
 /* ── helpers ─────────────────────────────────────────────────── */
 
@@ -76,8 +98,6 @@ function addDaysIso(iso: string, days: number): string {
   return `${yy}-${mm}-${dd}`;
 }
 
-const BUNDLES: LevelBundle[] = ["MIXED_1_3", "LEVEL_4", "MIXED_5_6", "LEVEL_7", "MIXED_8_9"];
-
 function firstAllowedStartHour(iso: string) {
   const a = sessionStartHoursForWibCalendarDate(iso);
   return a[0] ?? 14;
@@ -99,17 +119,19 @@ function scrollToSessionEditor() {
 }
 
 /** Pelatih kedua hanya lolos lewat level trainee (bukan lead) untuk bundle ini. */
-function secondaryIsTraineeOnly(c: Coach, bundle: LevelBundle): boolean {
+function secondaryIsTraineeOnly(c: Coach, bundle: ApiBundle | null): boolean {
+  if (!bundle) return false;
+  const def = parseBundleDefRow(bundle);
   return (
-    coachCanAssistBundle(c.teachLevels, c.traineeLevels, bundle) &&
-    !coachCanTeachBundle(c.teachLevels, bundle)
+    coachCanAssistBundle(c.teachLevels, c.traineeLevels, def) &&
+    !coachCanTeachBundle(c.teachLevels, def)
   );
 }
 
 /* ── component ───────────────────────────────────────────────── */
 
 export function JadwalClient({ canEdit }: { canEdit: boolean }) {
-  const { t, bundleLabel } = useApp();
+  const { t } = useApp();
 
   /* range & data */
   const [from, setFrom] = useState(todayIsoWib);
@@ -126,7 +148,8 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   const [date, setDate] = useState(todayIsoWib);
   const [hour, setHour] = useState(() => firstAllowedStartHour(todayIsoWib()));
   const [lane, setLane] = useState(1);
-  const [bundle, setBundle] = useState<LevelBundle>("MIXED_1_3");
+  const [bundleDefs, setBundleDefs] = useState<ApiBundle[]>([]);
+  const [bundleId, setBundleId] = useState("");
   const [coachPrimaryId, setCoachPrimaryId] = useState("");
   const [coachSecondaryId, setCoachSecondaryId] = useState("");
   const [pickStudents, setPickStudents] = useState<Record<string, boolean>>({});
@@ -205,16 +228,18 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     setLoading(true);
     setToast(null);
     try {
-      const [c, st, se] = await Promise.all([
+      const [c, st, se, bd] = await Promise.all([
         fetch("/api/coaches").then((r) => r.json()),
         fetch("/api/students").then((r) => r.json()),
         fetch(`/api/sessions?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`).then((r) =>
           r.json()
         ),
+        fetch("/api/session-bundles").then((r) => r.json()),
       ]);
       setCoaches(c);
       setStudents(st);
       setSessions(se);
+      setBundleDefs(Array.isArray(bd) ? bd : []);
     } catch {
       showToast(t("schedule.loadError"), "err");
     } finally {
@@ -226,19 +251,36 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     void load();
   }, [load]);
 
+  const selectedBundleDef = useMemo(() => {
+    const row = bundleDefs.find((b) => b.id === bundleId);
+    return row ? parseBundleDefRow(row) : null;
+  }, [bundleDefs, bundleId]);
+
+  useEffect(() => {
+    if (bundleDefs.length && !bundleDefs.some((b) => b.id === bundleId)) {
+      setBundleId(bundleDefs[0].id);
+    }
+  }, [bundleDefs, bundleId]);
+
   /* ── derived coaches / students ─────────────────────────────── */
   const eligibleCoaches = useMemo(
-    () => coaches.filter((c) => coachCanTeachBundle(c.teachLevels, bundle)),
-    [coaches, bundle]
+    () =>
+      selectedBundleDef
+        ? coaches.filter((c) => coachCanTeachBundle(c.teachLevels, selectedBundleDef))
+        : [],
+    [coaches, selectedBundleDef]
   );
 
   const secondaryOptions = useMemo(
     () =>
-      coaches.filter(
-        (c) =>
-          c.id !== coachPrimaryId && coachCanAssistBundle(c.teachLevels, c.traineeLevels, bundle)
-      ),
-    [coaches, coachPrimaryId, bundle]
+      selectedBundleDef
+        ? coaches.filter(
+            (c) =>
+              c.id !== coachPrimaryId &&
+              coachCanAssistBundle(c.teachLevels, c.traineeLevels, selectedBundleDef)
+          )
+        : [],
+    [coaches, coachPrimaryId, selectedBundleDef]
   );
 
   useEffect(() => {
@@ -254,10 +296,11 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       if (!coaches.some((c) => c.id === prev)) return "";
       if (prev === coachPrimaryId) return "";
       const c = coaches.find((x) => x.id === prev);
-      if (c && !coachCanAssistBundle(c.teachLevels, c.traineeLevels, bundle)) return "";
+      if (c && selectedBundleDef && !coachCanAssistBundle(c.teachLevels, c.traineeLevels, selectedBundleDef))
+        return "";
       return prev;
     });
-  }, [coaches, coachPrimaryId, bundle]);
+  }, [coaches, coachPrimaryId, selectedBundleDef]);
 
   const studentIds = useMemo(
     () => Object.entries(pickStudents).filter(([, v]) => v).map(([k]) => k),
@@ -265,7 +308,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   );
 
   const coachCount = coachSecondaryId ? 2 : 1;
-  const maxCap = maxStudentsForBundle(bundle, coachCount);
+  const maxCap = selectedBundleDef ? maxStudentsForDef(selectedBundleDef, coachCount) : 0;
 
   /* ── filtered sessions (search) ─────────────────────────────── */
   const filteredSessions = useMemo(() => {
@@ -292,7 +335,10 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
 
   /* ── actions ────────────────────────────────────────────────── */
   async function loadSuggestions() {
-    const r = await fetch(`/api/suggest?bundle=${bundle}&date=${encodeURIComponent(date)}`);
+    if (!bundleId) return;
+    const r = await fetch(
+      `/api/suggest?bundleId=${encodeURIComponent(bundleId)}&date=${encodeURIComponent(date)}`
+    );
     const data = await r.json();
     if (!r.ok) {
       showToast(data.error ?? t("schedule.suggestError"), "err");
@@ -312,7 +358,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
     setDate(s.date.slice(0, 10));
     setHour(s.hour);
     setLane(s.lane);
-    setBundle(s.bundle);
+    setBundleId(s.bundleId);
     setCoachPrimaryId(s.coachPrimaryId);
     setCoachSecondaryId(s.coachSecondaryId ?? "");
     const mp: Record<string, boolean> = {};
@@ -327,7 +373,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       date,
       hour,
       lane,
-      bundle,
+      bundleId,
       coachPrimaryId,
       coachSecondaryId: coachSecondaryId || null,
       studentIds,
@@ -391,17 +437,8 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
   }
 
   const eligibleStudents = students.filter((s) => {
-    const allowed =
-      bundle === "MIXED_1_3"
-        ? [1, 2, 3]
-        : bundle === "LEVEL_4"
-          ? [4]
-          : bundle === "MIXED_5_6"
-            ? [5, 6]
-            : bundle === "LEVEL_7"
-              ? [7]
-              : [8, 9];
-    return allowed.includes(s.level);
+    if (!selectedBundleDef) return false;
+    return selectedBundleDef.levelIds.includes(s.levelId);
   });
 
   const fieldClass =
@@ -664,13 +701,13 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
             <label className="block text-sm">
               {t("schedule.bundle")}
               <select
-                value={bundle}
-                onChange={(e) => setBundle(e.target.value as LevelBundle)}
+                value={bundleId}
+                onChange={(e) => setBundleId(e.target.value)}
                 className={fieldClass}
               >
-                {BUNDLES.map((b) => (
-                  <option key={b} value={b}>
-                    {bundleLabel(b)}
+                {bundleDefs.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
                   </option>
                 ))}
               </select>
@@ -726,7 +763,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                   <span>
                     {s.name}{" "}
                     <span className="text-[var(--muted)]">
-                      L{s.level}
+                      {s.swimLevel?.name ?? s.levelId.slice(0, 8)}
                     </span>
                   </span>
                 </label>
@@ -835,7 +872,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
           <ul className="pss-stagger space-y-3">
             {filteredSessions.map((s, idx) => {
               const cc = s.coachSecondaryId ? 2 : 1;
-              const max = maxStudentsForBundle(s.bundle, cc);
+              const max = maxCapForBundleRow(s.bundle, cc);
               const occ = occupancyRatio(s.enrollments.length, max);
               return (
                 <li
@@ -849,7 +886,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                         {formatDateId(s.date.slice(0, 10))} · {s.hour}:00
                       </p>
                       <p className="text-sm text-[var(--muted)]">
-                        {t("schedule.thLane")} {s.lane} · {bundleLabel(s.bundle)}
+                        {t("schedule.thLane")} {s.lane} · {s.bundle.name}
                       </p>
                     </div>
                     <span
@@ -947,11 +984,11 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                               );
                             }
                             const cc = cell.coachSecondaryId ? 2 : 1;
-                            const mx = maxStudentsForBundle(cell.bundle, cc);
+                            const mx = maxCapForBundleRow(cell.bundle, cc);
                             const oc = occupancyRatio(cell.enrollments.length, mx);
                             return (
                               <td key={l} className="px-3 py-2">
-                                <p className="font-medium">{bundleLabel(cell.bundle)}</p>
+                                <p className="font-medium">{cell.bundle.name}</p>
                                 <p className="text-xs text-[var(--muted)]">
                                   {cell.coachPrimary.name}
                                   {cell.coachSecondary

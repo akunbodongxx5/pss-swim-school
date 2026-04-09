@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CheckCheck, ClipboardList, ListPlus, StickyNote, User } from "lucide-react";
 import { useApp } from "@/lib/i18n-context";
 
-type Student = { id: string; name: string; level: number };
+type Student = { id: string; name: string; levelId: string; swimLevel?: { name: string } };
 type Entry = { id: string; note: string | null; student: Student; createdAt: string };
 
 export function WaitlistClient({ canEdit }: { canEdit: boolean }) {
@@ -73,7 +73,7 @@ export function WaitlistClient({ canEdit }: { canEdit: boolean }) {
             <select value={studentId} onChange={(e) => setStudentId(e.target.value)} className={fieldClass}>
               {students.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} (L{s.level})
+                  {s.name} ({s.swimLevel?.name ?? s.levelId.slice(0, 8)})
                 </option>
               ))}
             </select>

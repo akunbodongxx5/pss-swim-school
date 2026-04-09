@@ -24,6 +24,9 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: b.schoolName, template: `%s | ${b.schoolName}` },
     description: `Jadwal, murid, dan pelatih — ${b.schoolName}`,
     appleWebApp: { capable: true, title: appleShort, statusBarStyle: "default" },
+    other: {
+      "mobile-web-app-capable": "yes",
+    },
     formatDetection: { telephone: false },
     icons: {
       icon: [

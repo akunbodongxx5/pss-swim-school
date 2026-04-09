@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   const rows = await prisma.waitlistEntry.findMany({
     where: { status: "pending" },
-    include: { student: true },
+    include: { student: { include: { swimLevel: true } } },
     orderBy: { createdAt: "asc" },
   });
   return NextResponse.json(rows);
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   if (!body.studentId) return NextResponse.json({ error: "studentId wajib." }, { status: 400 });
   const w = await prisma.waitlistEntry.create({
     data: { studentId: body.studentId, note: body.note?.trim() || null },
-    include: { student: true },
+    include: { student: { include: { swimLevel: true } } },
   });
   return NextResponse.json(w, { status: 201 });
 }

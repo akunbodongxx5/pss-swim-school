@@ -6,7 +6,7 @@ export type UndoSessionPayload = {
   date: string;
   hour: number;
   lane: number;
-  bundle: string;
+  bundleId: string;
   coachPrimaryId: string;
   coachSecondaryId: string | null;
   studentIds: string[];
@@ -35,7 +35,7 @@ export function sessionsResponseToUndoPayload(sessions: unknown[]): UndoSessionP
     date: new Date(String(row.date)).toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" }),
     hour: Number(row.hour),
     lane: Number(row.lane),
-    bundle: String(row.bundle),
+    bundleId: String(row.bundleId),
     coachPrimaryId: String(row.coachPrimaryId),
     coachSecondaryId: row.coachSecondaryId ? String(row.coachSecondaryId) : null,
     studentIds: Array.isArray(row.enrollments)
