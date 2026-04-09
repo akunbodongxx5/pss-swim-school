@@ -138,6 +138,7 @@ export type MessageTree = {
   };
   settings: {
     intro: string;
+    introSummary: string;
     schoolNameLabel: string;
     schoolNameHint: string;
     logoLabel: string;
@@ -171,6 +172,7 @@ export type MessageTree = {
     empty: string;
   };
   coaches: {
+    hintSummary: string;
     hint: string;
     thName: string;
     thLevel: string;

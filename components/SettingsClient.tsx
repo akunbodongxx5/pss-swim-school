@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
-import { ImagePlus, Save, Type } from "lucide-react";
+import { ChevronDown, ImagePlus, Info, Save, Type } from "lucide-react";
 import { SessionBundlesManager } from "@/components/SessionBundlesManager";
 import { useBranding } from "@/lib/branding-context";
 import { useApp } from "@/lib/i18n-context";
@@ -110,9 +110,16 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
 
   return (
     <div className="space-y-6">
-      <div className="pss-panel border-l-4 border-l-sky-500 p-4 text-sm leading-relaxed text-[var(--text)]">
-        {m.settings.intro}
-      </div>
+      <details className="group rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm open:border-sky-300/40 open:ring-1 open:ring-sky-500/15 dark:open:border-sky-700/40">
+        <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-3 text-sm font-medium text-[var(--text)] marker:content-none [&::-webkit-details-marker]:hidden sm:px-4">
+          <Info className="h-4 w-4 shrink-0 text-sky-500" aria-hidden />
+          <span className="min-w-0 flex-1">{m.settings.introSummary}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-[var(--muted)] transition-transform duration-200 group-open:rotate-180" aria-hidden />
+        </summary>
+        <div className="border-t border-[var(--border)] px-3 pb-3 pt-2 text-sm leading-relaxed text-[var(--muted)] sm:px-4">
+          {m.settings.intro}
+        </div>
+      </details>
 
       <label className="block">
         <span className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--text)]">

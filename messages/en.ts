@@ -142,6 +142,7 @@ const en: MessageTree = {
   settings: {
     intro:
       "Name and logo appear in the header, browser tab, and Add to Home Screen (PWA) icon. Your logo is auto-fitted to a square with a light background and safe padding for phone launchers. PNG or JPEG recommended. Set PWA_ICON_BACKGROUND (#rrggbb) on the server to change the icon backdrop. Only admins can edit.",
+    introSummary: "About logo & PWA",
     schoolNameLabel: "Swim school name",
     schoolNameHint: "Shown in the header and app title.",
     logoLabel: "Logo",
@@ -175,6 +176,7 @@ const en: MessageTree = {
     empty: "Empty.",
   },
   coaches: {
+    hintSummary: "About lead & trainee levels",
     hint: "Lead levels: can be lead coach. Trainee levels: second coach only for those levels. Levels checked in neither are not allowed. Lead and trainee cannot share the same number. Only admins can edit.",
     thName: "Name",
     thLevel: "Levels",

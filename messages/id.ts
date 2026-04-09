@@ -142,6 +142,7 @@ const id: MessageTree = {
   settings: {
     intro:
       "Nama dan logo dipakai di header, judul tab, dan ikon \u201cTambahkan ke layar utama\u201d (PWA). Logo otomatis dijadikan ikon persegi dengan latar terang dan jarak aman di tepi. PNG/JPEG disarankan. Warna latar ikon bisa diatur lewat env PWA_ICON_BACKGROUND (#rrggbb). Hanya admin yang bisa mengubah.",
+    introSummary: "Penjelasan logo & PWA",
     schoolNameLabel: "Nama sekolah renang",
     schoolNameHint: "Tampil di header dan judul aplikasi.",
     logoLabel: "Logo",
@@ -175,6 +176,7 @@ const id: MessageTree = {
     empty: "Kosong.",
   },
   coaches: {
+    hintSummary: "Penjelasan level utama & trainee",
     hint: "Level utama (lead): bisa jadi pelatih utama. Level trainee: hanya sebagai pelatih kedua untuk level itu. Level tanpa centang di keduanya = tidak diizinkan. Lead dan trainee tidak boleh sama untuk satu angka. Hanya admin yang bisa mengubah.",
     thName: "Nama",
     thLevel: "Level",

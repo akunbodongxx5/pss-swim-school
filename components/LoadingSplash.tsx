@@ -18,9 +18,9 @@ export function LoadingSplash({ backgroundHex }: { backgroundHex: string }) {
       />
       <div className="relative flex max-w-sm flex-col items-center text-center">
         <div className="pss-splash-logo-wrap rounded-3xl bg-white/90 p-3 shadow-lg ring-1 ring-slate-200/80 dark:bg-white/10 dark:ring-white/10">
-          {/* /icon = app/icon.tsx — tanpa query DB */}
+          {/* app/icon.png → GET /icon.png (file metadata Next.js) */}
           <img
-            src="/icon"
+            src="/icon.png"
             alt=""
             width={176}
             height={176}

@@ -327,10 +327,16 @@ export function PelatihView({ initialCoaches, canEdit }: { initialCoaches: Coach
 
   return (
     <div className="min-w-0 space-y-4 overflow-x-hidden">
-      <div className="pss-panel flex items-start gap-3 border-l-4 border-l-teal-500 px-3 py-3.5 text-sm leading-relaxed text-[var(--text)] sm:px-4">
-        <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-teal-600 dark:text-teal-400" strokeWidth={2} />
-        <p>{t("coaches.hint")}</p>
-      </div>
+      <details className="group rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-sm open:border-teal-300/40 open:ring-1 open:ring-teal-500/15 dark:open:border-teal-700/40">
+        <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-3 text-sm font-medium text-[var(--text)] marker:content-none [&::-webkit-details-marker]:hidden sm:px-4">
+          <Sparkles className="h-4 w-4 shrink-0 text-teal-600 dark:text-teal-400" strokeWidth={2} aria-hidden />
+          <span className="min-w-0 flex-1">{t("coaches.hintSummary")}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-[var(--muted)] transition-transform duration-200 group-open:rotate-180" aria-hidden />
+        </summary>
+        <div className="border-t border-[var(--border)] px-3 pb-3 pt-2 text-sm leading-relaxed text-[var(--muted)] sm:px-4">
+          {t("coaches.hint")}
+        </div>
+      </details>
       {!canEdit && (
         <div className="pss-panel flex items-start gap-3 border-l-4 border-l-violet-500 px-4 py-3.5 text-sm text-[var(--text)]">
           <Eye className="mt-0.5 h-5 w-5 shrink-0 text-violet-500 dark:text-violet-400" strokeWidth={2} />

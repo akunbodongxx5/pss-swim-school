@@ -15,7 +15,7 @@ function parseSizeParam(req: Request): number {
 
 /**
  * Ikon PWA / apple-touch: logo sekolah diolah jadi persegi (latar terang + area aman maskable).
- * Tanpa logo → redirect /icon.
+ * Tanpa logo → redirect /icon.png (app/icon.png).
  */
 export async function GET(req: Request) {
   const pixelSize = parseSizeParam(req);
@@ -37,5 +37,5 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.redirect(new URL("/icon", req.url), 302);
+  return NextResponse.redirect(new URL("/icon.png", req.url), 302);
 }

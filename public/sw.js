@@ -1,4 +1,4 @@
-const CACHE_NAME = "pss-v2";
+const CACHE_NAME = "pss-v3";
 const PRECACHE = ["/", "/jadwal", "/murid", "/pelatih"];
 
 self.addEventListener("install", (e) => {
@@ -42,14 +42,18 @@ self.addEventListener("fetch", (e) => {
     fetch(e.request)
       .then((res) => {
         if (res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then((c) => {
-            try {
-              return c.put(e.request, clone);
-            } catch {
-              /* ignore */
-            }
-          });
+          const ct = res.headers.get("content-type") || "";
+          /** Jangan cache HTML shell Next — hash chunk berubah tiap build; cache HTML = halaman putus setelah deploy. */
+          if (!ct.includes("text/html")) {
+            const clone = res.clone();
+            caches.open(CACHE_NAME).then((c) => {
+              try {
+                return c.put(e.request, clone);
+              } catch {
+                /* ignore */
+              }
+            });
+          }
         }
         return res;
       })
