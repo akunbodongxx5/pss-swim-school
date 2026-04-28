@@ -204,6 +204,9 @@ const en: MessageTree = {
     historySubtitle: "All coach and admin notes for this student.",
     linkWriteForStudent: "Write a report (this student)",
     emptyStudentHistory: "No reports for this student yet.",
+    reportDateLabel: "Report date (day this note refers to)",
+    recordedAtHint: "Recorded in system",
+    invalidReportDate: "Report date is invalid or too far in the future.",
   },
   waitlist: {
     hint: "Simple queue; mark done after they join a class.",

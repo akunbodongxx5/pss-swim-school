@@ -90,6 +90,8 @@ model StudentReport {
   studentId String
   student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   content   String   @db.Text
+  /// Tanggal yang dilaporkan (boleh lampau); berbeda dari createdAt jika diisi mundur.
+  reportDate DateTime? @db.Date
   /// Pelatih penulis; null jika admin yang menulis (saat toggle aktif).
   authorCoachId String?
   authorCoach   Coach? @relation(fields: [authorCoachId], references: [id], onDelete: SetNull)
@@ -100,6 +102,7 @@ model StudentReport {
   @@index([studentId])
   @@index([authorCoachId])
   @@index([createdAt])
+  @@index([reportDate])
 }
 
 model ConflictPair {

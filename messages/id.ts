@@ -202,6 +202,9 @@ const id: MessageTree = {
     historySubtitle: "Semua catatan dari pelatih maupun admin untuk murid ini.",
     linkWriteForStudent: "Tulis laporan (murid ini)",
     emptyStudentHistory: "Belum ada laporan untuk murid ini.",
+    reportDateLabel: "Tanggal laporan (hari yang dilaporkan)",
+    recordedAtHint: "Dicatat di sistem",
+    invalidReportDate: "Tanggal laporan tidak valid atau terlalu jauh di masa depan.",
   },
   waitlist: {
     hint: "Antrian murid menunggu slot; tandai selesai setelah masuk kelas.",

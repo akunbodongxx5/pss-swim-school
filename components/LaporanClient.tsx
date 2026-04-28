@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { FileText, Loader2, RefreshCw, Send } from "lucide-react";
+import { formatIsoDateLocalMedium, parseReportDateIso, todayIsoLocal } from "@/lib/report-date";
 import { useApp } from "@/lib/i18n-context";
 
 type StudentOpt = { id: string; name: string };
 type ReportRow = {
   id: string;
   content: string;
+  reportDate: string;
   createdAt: string;
   updatedAt: string;
   student: { id: string; name: string };
@@ -31,6 +33,7 @@ export function LaporanClient({
   const [loading, setLoading] = useState(true);
   const [needsCoachPick, setNeedsCoachPick] = useState(false);
   const [studentId, setStudentId] = useState("");
+  const [reportDate, setReportDate] = useState(todayIsoLocal);
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
@@ -77,8 +80,11 @@ export function LaporanClient({
 
   useEffect(() => {
     try {
-      const sid = new URL(window.location.href).searchParams.get("studentId");
+      const u = new URL(window.location.href);
+      const sid = u.searchParams.get("studentId");
+      const rd = u.searchParams.get("reportDate")?.trim();
       if (sid) setStudentId(sid);
+      if (rd && parseReportDateIso(rd)) setReportDate(rd);
     } catch {
       /* ignore */
     }
@@ -94,11 +100,15 @@ export function LaporanClient({
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ studentId, content }),
+        body: JSON.stringify({ studentId, content, reportDate }),
       });
       const raw = await r.json().catch(() => ({}));
       if (r.status === 403 && raw?.error === "admin_write_disabled") {
         setMsg({ kind: "err", text: m.reports.forbiddenAdminWrite });
+        return;
+      }
+      if (!r.ok && raw?.error === "invalid_report_date") {
+        setMsg({ kind: "err", text: m.reports.invalidReportDate });
         return;
       }
       if (!r.ok) {
@@ -106,6 +116,7 @@ export function LaporanClient({
         return;
       }
       setContent("");
+      setReportDate(todayIsoLocal());
       setMsg({ kind: "ok", text: m.reports.saved });
       await load();
     } catch {
@@ -176,6 +187,18 @@ export function LaporanClient({
           </label>
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
+              {m.reports.reportDateLabel}
+            </span>
+            <input
+              type="date"
+              required
+              value={reportDate}
+              onChange={(e) => setReportDate(e.target.value)}
+              className="w-full min-h-12 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] px-3 py-2.5 text-[var(--text)] outline-none transition-shadow focus:border-[var(--accent)] focus:ring-4 focus:ring-[var(--accent)]/15"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
               {m.reports.contentLabel}
             </span>
             <textarea
@@ -219,11 +242,17 @@ export function LaporanClient({
                 key={rep.id}
                 className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--border)]/80 pb-2">
-                  <span className="font-semibold text-[var(--text)]">{rep.student.name}</span>
-                  <span className="text-xs text-[var(--muted)]">
+                <div className="space-y-1 border-b border-[var(--border)]/80 pb-2">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="font-semibold text-[var(--text)]">{rep.student.name}</span>
+                    <span className="text-sm font-medium text-[var(--text)]">
+                      {formatIsoDateLocalMedium(rep.reportDate)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-[var(--muted)]">
+                    {m.reports.recordedAtHint}:{" "}
                     {new Date(rep.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
-                  </span>
+                  </p>
                 </div>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--text)]">{rep.content}</p>
                 <p className="mt-3 text-xs text-[var(--muted)]">

@@ -197,6 +197,9 @@ export type MessageTree = {
     historySubtitle: string;
     linkWriteForStudent: string;
     emptyStudentHistory: string;
+    reportDateLabel: string;
+    recordedAtHint: string;
+    invalidReportDate: string;
   };
   waitlist: {
     hint: string;

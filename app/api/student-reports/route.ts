@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { parseReportDateIso, todayIsoLocal } from "@/lib/report-date";
 import { prisma } from "@/lib/prisma";
 import { withDbRetry } from "@/lib/db-retry";
 
@@ -11,21 +12,34 @@ const MAX_CONTENT = 12_000;
 function serializeReportRow(r: {
   id: string;
   content: string;
+  reportDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
   authoredByAdmin: boolean;
   student: { id: string; name: string };
   authorCoach: { id: string; name: string } | null;
 }) {
+  const rd = r.reportDate
+    ? r.reportDate.toISOString().slice(0, 10)
+    : r.createdAt.toISOString().slice(0, 10);
   return {
     id: r.id,
     content: r.content,
+    reportDate: rd,
     createdAt: r.createdAt.toISOString(),
     updatedAt: r.updatedAt.toISOString(),
     student: r.student,
     authoredByAdmin: r.authoredByAdmin,
     authorCoach: r.authorCoach ? { id: r.authorCoach.id, name: r.authorCoach.name } : null,
   };
+}
+
+function resolveReportDateForCreate(raw: unknown): Date | null {
+  if (raw === undefined || raw === null) return parseReportDateIso(todayIsoLocal());
+  if (typeof raw !== "string") return null;
+  const t = raw.trim();
+  if (t === "") return parseReportDateIso(todayIsoLocal());
+  return parseReportDateIso(t);
 }
 
 export async function GET(req: Request) {
@@ -95,11 +109,15 @@ export async function POST(req: Request) {
   const jar = cookies();
   const role = jar.get("pss_role")?.value ?? "admin";
 
-  const body = (await req.json()) as { studentId?: unknown; content?: unknown };
+  const body = (await req.json()) as { studentId?: unknown; content?: unknown; reportDate?: unknown };
   const studentId = typeof body.studentId === "string" ? body.studentId.trim() : "";
   const content = typeof body.content === "string" ? body.content.trim() : "";
+  const reportDateResolved = resolveReportDateForCreate(body.reportDate);
   if (!studentId || !content) {
     return NextResponse.json({ error: "invalid_body" }, { status: 400 });
+  }
+  if (!reportDateResolved) {
+    return NextResponse.json({ error: "invalid_report_date" }, { status: 400 });
   }
   if (content.length > MAX_CONTENT) {
     return NextResponse.json({ error: "content_too_long" }, { status: 400 });
@@ -130,6 +148,7 @@ export async function POST(req: Request) {
       data: {
         studentId,
         content,
+        reportDate: reportDateResolved,
         authorCoachId: coach.id,
         authoredByAdmin: false,
       },
@@ -144,6 +163,7 @@ export async function POST(req: Request) {
       report: {
         id: created.id,
         content: created.content,
+        reportDate: created.reportDate ? created.reportDate.toISOString().slice(0, 10) : null,
         createdAt: created.createdAt.toISOString(),
         updatedAt: created.updatedAt.toISOString(),
         student: created.student,
@@ -165,6 +185,7 @@ export async function POST(req: Request) {
     data: {
       studentId,
       content,
+      reportDate: reportDateResolved,
       authorCoachId: null,
       authoredByAdmin: true,
     },
@@ -179,6 +200,7 @@ export async function POST(req: Request) {
     report: {
       id: created.id,
       content: created.content,
+      reportDate: created.reportDate ? created.reportDate.toISOString().slice(0, 10) : null,
       createdAt: created.createdAt.toISOString(),
       updatedAt: created.updatedAt.toISOString(),
       student: created.student,

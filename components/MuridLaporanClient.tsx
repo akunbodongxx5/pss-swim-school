@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, FileText, Loader2, RefreshCw } from "lucide-react";
+import { formatIsoDateLocalMedium, todayIsoLocal } from "@/lib/report-date";
 import { useApp } from "@/lib/i18n-context";
 
 type ReportRow = {
   id: string;
   content: string;
+  reportDate: string;
   createdAt: string;
   updatedAt: string;
   student: { id: string; name: string };
@@ -91,7 +93,7 @@ export function MuridLaporanClient({
 
       <div className="flex flex-wrap gap-2">
         <Link
-          href={`/laporan?studentId=${encodeURIComponent(studentId)}`}
+          href={`/laporan?studentId=${encodeURIComponent(studentId)}&reportDate=${encodeURIComponent(todayIsoLocal())}`}
           prefetch={false}
           className="inline-flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-[var(--accent)] to-[var(--mint)] px-4 text-sm font-semibold text-white shadow-md shadow-[var(--accent)]/25"
         >
@@ -126,10 +128,14 @@ export function MuridLaporanClient({
                 key={rep.id}
                 className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-[var(--border)]/80 pb-2">
-                  <span className="text-xs text-[var(--muted)]">
-                    {new Date(rep.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                <div className="space-y-1 border-b border-[var(--border)]/80 pb-2">
+                  <span className="text-sm font-semibold text-[var(--text)]">
+                    {formatIsoDateLocalMedium(rep.reportDate)}
                   </span>
+                  <p className="text-xs text-[var(--muted)]">
+                    {m.reports.recordedAtHint}:{" "}
+                    {new Date(rep.createdAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+                  </p>
                 </div>
                 <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--text)]">{rep.content}</p>
                 <p className="mt-3 text-xs text-[var(--muted)]">
