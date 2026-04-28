@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { KeyRound, ShieldCheck, Sparkles, UserRound } from "lucide-react";
 import { useApp } from "@/lib/i18n-context";
@@ -8,7 +7,6 @@ import { useApp } from "@/lib/i18n-context";
 type CoachOpt = { id: string; name: string };
 
 export default function LoginPage() {
-  const router = useRouter();
   const { t } = useApp();
   const [role, setRole] = useState<"admin" | "coach">("admin");
   const [pin, setPin] = useState("");
@@ -73,8 +71,8 @@ export default function LoginPage() {
       else setErr(typeof code === "string" ? code : "Gagal");
       return;
     }
-    router.refresh();
-    router.push("/jadwal");
+    /** Full navigation supaya layout membaca cookie peran baru (router alone bisa menyisakan UI pelatih). */
+    window.location.assign("/jadwal");
   }
 
   const fieldClass =

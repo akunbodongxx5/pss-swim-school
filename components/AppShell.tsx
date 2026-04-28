@@ -50,6 +50,26 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
   const { branding } = useBranding();
   const [menuOpen, setMenuOpen] = useState(false);
   const [clearingSchedule, setClearingSchedule] = useState(false);
+  /** Sinkron dengan cookie httpOnly: layout bisa stale setelah login/ganti peran tanpa full reload. */
+  const [role, setRole] = useState<Role>(initialRole);
+
+  useEffect(() => {
+    setRole(initialRole);
+  }, [initialRole]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/session", { credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((d: { role?: string }) => {
+        if (cancelled) return;
+        if (d.role === "admin" || d.role === "coach") setRole(d.role);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -71,9 +91,9 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
   }, [pathname, branding.schoolName, t]);
 
   const title = titleForPath(pathname, t);
-  const roleLabel = initialRole === "coach" ? t("login.coach") : t("login.admin");
+  const roleLabel = role === "coach" ? t("login.coach") : t("login.admin");
 
-  const isCoach = initialRole === "coach";
+  const isCoach = role === "coach";
   const tabs = isCoach
     ? [
         { href: "/jadwal", label: m.nav.schedule, Icon: CalendarDays },
@@ -149,7 +169,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
             {m.menu.roleLogin}
           </Link>
 
-          {initialRole === "admin" && (
+          {role === "admin" && (
             <button
               type="button"
               disabled={clearingSchedule}
@@ -380,7 +400,7 @@ export function AppShell({ children, initialRole }: { children: React.ReactNode;
                 <LogIn className="h-5 w-5 shrink-0 text-[var(--mint)]" />
                 {m.menu.roleLogin}
               </Link>
-              {initialRole === "admin" && (
+              {role === "admin" && (
                 <button
                   type="button"
                   disabled={clearingSchedule}
