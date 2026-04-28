@@ -1,10 +1,12 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { verifyAdminPin } from "@/lib/admin-pin";
+import { ensureSchoolBrandingRow } from "@/lib/school-branding-server";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-const ADMIN_PIN = process.env.ADMIN_PIN || "1234";
+const envAdminPin = () => process.env.ADMIN_PIN || "1234";
 
 /** Vercel set VERCEL=1. Self-hosted HTTPS: set COOKIE_SECURE=true di env. */
 const cookieSecure = process.env.COOKIE_SECURE === "true" || process.env.VERCEL === "1";
@@ -24,7 +26,13 @@ export async function POST(req: Request) {
   const jar = cookies();
 
   if (role === "admin") {
-    if (body.pin !== ADMIN_PIN) {
+    await ensureSchoolBrandingRow();
+    const row = await prisma.schoolBranding.findUnique({
+      where: { id: 1 },
+      select: { adminPinHash: true },
+    });
+    const pin = typeof body.pin === "string" ? body.pin : "";
+    if (!verifyAdminPin(pin, row?.adminPinHash ?? null, envAdminPin())) {
       return NextResponse.json({ ok: false, error: "PIN salah" }, { status: 401 });
     }
     jar.set("pss_role", "admin", cookieOpts);

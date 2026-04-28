@@ -15,6 +15,8 @@ model SchoolBranding {
   logoVersion Int     @default(1)
   /// Admin boleh menulis laporan murid (selain membaca); pelatih selalu bisa menulis untuk muridnya.
   adminCanWriteStudentReports Boolean @default(false)
+  /// Hash passcode admin (scrypt); null = login admin pakai ADMIN_PIN dari env / default app.
+  adminPinHash String? @db.Text
 
   swimLevels     SwimLevel[]
   sessionBundles SessionBundleDefinition[]

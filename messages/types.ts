@@ -170,9 +170,23 @@ export type MessageTree = {
       generic: string;
       server_error: string;
       bad_response: string;
+      adminPin_wrong_current: string;
+      adminPin_mismatch: string;
+      adminPin_too_short: string;
+      adminPin_too_long: string;
+      adminPin_same_as_current: string;
     };
     adminReportsToggleLabel: string;
     adminReportsToggleHint: string;
+    adminPasscodeTitle: string;
+    adminPasscodeHintEnvFallback: string;
+    adminPasscodeHintReplace: string;
+    adminPasscodeCurrent: string;
+    adminPasscodeNew: string;
+    adminPasscodeConfirm: string;
+    adminPasscodeSave: string;
+    adminPasscodeSaving: string;
+    adminPasscodeSaved: string;
   };
   reports: {
     subtitle: string;
