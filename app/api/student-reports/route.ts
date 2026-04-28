@@ -8,10 +8,62 @@ export const dynamic = "force-dynamic";
 
 const MAX_CONTENT = 12_000;
 
-export async function GET() {
+function serializeReportRow(r: {
+  id: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  authoredByAdmin: boolean;
+  student: { id: string; name: string };
+  authorCoach: { id: string; name: string } | null;
+}) {
+  return {
+    id: r.id,
+    content: r.content,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
+    student: r.student,
+    authoredByAdmin: r.authoredByAdmin,
+    authorCoach: r.authorCoach ? { id: r.authorCoach.id, name: r.authorCoach.name } : null,
+  };
+}
+
+export async function GET(req: Request) {
   const jar = cookies();
   const role = jar.get("pss_role")?.value ?? "admin";
   const coachCookie = jar.get("pss_coach_id")?.value ?? null;
+
+  const url = new URL(req.url);
+  const studentIdFilter = url.searchParams.get("studentId")?.trim() ?? "";
+
+  if (studentIdFilter) {
+    if (role === "coach" && !coachCookie) {
+      return NextResponse.json({ reports: [], needsCoachPick: true, student: null });
+    }
+
+    const student = await prisma.student.findUnique({
+      where: { id: studentIdFilter },
+      select: { id: true, name: true },
+    });
+    if (!student) {
+      return NextResponse.json({ error: "student_not_found" }, { status: 404 });
+    }
+
+    const rows = await withDbRetry(() =>
+      prisma.studentReport.findMany({
+        where: { studentId: studentIdFilter },
+        orderBy: { createdAt: "desc" },
+        include: {
+          student: { select: { id: true, name: true } },
+          authorCoach: { select: { id: true, name: true } },
+        },
+        take: 500,
+      }),
+    );
+
+    const reports = rows.map(serializeReportRow);
+    return NextResponse.json({ reports, needsCoachPick: false, student });
+  }
 
   if (role === "coach" && !coachCookie) {
     return NextResponse.json({ reports: [], needsCoachPick: true });
@@ -34,15 +86,7 @@ export async function GET() {
     }),
   );
 
-  const reports = rows.map((r) => ({
-    id: r.id,
-    content: r.content,
-    createdAt: r.createdAt.toISOString(),
-    updatedAt: r.updatedAt.toISOString(),
-    student: r.student,
-    authoredByAdmin: r.authoredByAdmin,
-    authorCoach: r.authorCoach ? { id: r.authorCoach.id, name: r.authorCoach.name } : null,
-  }));
+  const reports = rows.map(serializeReportRow);
 
   return NextResponse.json({ reports, needsCoachPick: false });
 }

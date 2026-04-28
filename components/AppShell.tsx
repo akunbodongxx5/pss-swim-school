@@ -29,6 +29,7 @@ function titleForPath(pathname: string, t: (k: string) => string): string {
   if (pathname.startsWith("/pelatih")) return t("titles.coaches");
   if (pathname.startsWith("/waitlist")) return t("titles.waitlist");
   if (pathname.startsWith("/laporan")) return t("titles.reports");
+  if (/^\/murid\/[^/]+\/laporan/.test(pathname)) return t("titles.studentReportHistory");
   if (pathname.startsWith("/login")) return t("titles.login");
   if (pathname.startsWith("/settings")) return t("titles.settings");
   return t("appName");

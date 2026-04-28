@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   CalendarClock,
@@ -906,9 +907,26 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                         }`
                       : ""}
                   </p>
-                  <p className="mt-1 text-sm">
+                  <p className="mt-1 text-sm leading-relaxed">
                     <span className="text-[var(--muted)]">{t("schedule.thStudents")}: </span>
-                    {s.enrollments.map((e) => e.student.name).join(", ") || "—"}
+                    {s.enrollments.length === 0 ? (
+                      "—"
+                    ) : (
+                      <>
+                        {s.enrollments.map((e, i) => (
+                          <span key={e.student.id}>
+                            {i > 0 ? ", " : ""}
+                            <Link
+                              href={`/murid/${e.student.id}/laporan`}
+                              prefetch={false}
+                              className="font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+                            >
+                              {e.student.name}
+                            </Link>
+                          </span>
+                        ))}
+                      </>
+                    )}
                   </p>
                   {canEdit && (
                     <div className="mt-3 flex gap-4 border-t border-[var(--border)] pt-3 print:hidden">
@@ -1004,6 +1022,23 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
                                 >
                                   {cell.enrollments.length}/{mx}
                                 </span>
+                                {cell.enrollments.length > 0 ? (
+                                  <p className="mt-1.5 max-w-[12rem] text-[11px] leading-snug text-[var(--text)]">
+                                    {cell.enrollments.map((e, i) => (
+                                      <span key={e.student.id}>
+                                        {i > 0 ? ", " : ""}
+                                        <Link
+                                          href={`/murid/${e.student.id}/laporan`}
+                                          prefetch={false}
+                                          className="font-semibold text-[var(--accent)] underline-offset-2 hover:underline"
+                                          onClick={(ev) => ev.stopPropagation()}
+                                        >
+                                          {e.student.name}
+                                        </Link>
+                                      </span>
+                                    ))}
+                                  </p>
+                                ) : null}
                                 {canEdit && (
                                   <button
                                     type="button"

@@ -75,6 +75,15 @@ export function LaporanClient({
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    try {
+      const sid = new URL(window.location.href).searchParams.get("studentId");
+      if (sid) setStudentId(sid);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!canCompose || !studentId.trim() || !content.trim()) return;

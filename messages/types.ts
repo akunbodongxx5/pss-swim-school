@@ -31,6 +31,7 @@ export type MessageTree = {
     login: string;
     settings: string;
     reports: string;
+    studentReportHistory: string;
   };
   home: {
     headline: string;
@@ -193,6 +194,9 @@ export type MessageTree = {
     formTitleCoach: string;
     formTitleAdmin: string;
     refresh: string;
+    historySubtitle: string;
+    linkWriteForStudent: string;
+    emptyStudentHistory: string;
   };
   waitlist: {
     hint: string;

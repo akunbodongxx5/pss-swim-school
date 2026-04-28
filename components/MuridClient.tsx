@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Eye, GitMerge, Search, UserPlus, Users, UserX } from "lucide-react";
 import { useApp } from "@/lib/i18n-context";
@@ -284,7 +285,13 @@ export function MuridClient({ canEdit }: { canEdit: boolean }) {
                 ) : (
                   <div className="flex min-h-10 flex-wrap items-center justify-between gap-2">
                     <span className="flex items-center gap-2">
-                      <span className="font-medium">{s.name}</span>
+                      <Link
+                        href={`/murid/${s.id}/laporan`}
+                        prefetch={false}
+                        className="font-medium text-[var(--accent)] underline-offset-2 hover:underline"
+                      >
+                        {s.name}
+                      </Link>
                       <LevelBadge
                         name={s.swimLevel?.name ?? s.levelId.slice(0, 8)}
                         sortOrder={s.swimLevel?.sortOrder ?? 99}

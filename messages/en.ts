@@ -31,6 +31,7 @@ const en: MessageTree = {
     login: "Role",
     settings: "School settings",
     reports: "Student reports",
+    studentReportHistory: "Report history",
   },
   home: {
     headline: "Swim school management",
@@ -200,6 +201,9 @@ const en: MessageTree = {
     formTitleCoach: "New report",
     formTitleAdmin: "Write as admin",
     refresh: "Reload",
+    historySubtitle: "All coach and admin notes for this student.",
+    linkWriteForStudent: "Write a report (this student)",
+    emptyStudentHistory: "No reports for this student yet.",
   },
   waitlist: {
     hint: "Simple queue; mark done after they join a class.",

@@ -31,6 +31,7 @@ const id: MessageTree = {
     login: "Peran",
     settings: "Pengaturan sekolah",
     reports: "Laporan murid",
+    studentReportHistory: "Riwayat laporan",
   },
   home: {
     headline: "Manajemen swim school",
@@ -198,6 +199,9 @@ const id: MessageTree = {
     formTitleCoach: "Tulis laporan baru",
     formTitleAdmin: "Tulis sebagai admin",
     refresh: "Muat ulang",
+    historySubtitle: "Semua catatan dari pelatih maupun admin untuk murid ini.",
+    linkWriteForStudent: "Tulis laporan (murid ini)",
+    emptyStudentHistory: "Belum ada laporan untuk murid ini.",
   },
   waitlist: {
     hint: "Antrian murid menunggu slot; tandai selesai setelah masuk kelas.",
