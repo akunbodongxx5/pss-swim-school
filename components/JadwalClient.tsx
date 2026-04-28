@@ -531,7 +531,7 @@ export function JadwalClient({ canEdit }: { canEdit: boolean }) {
       {toast && (
         <div
           style={{ position: "fixed", top: "1rem", left: "1rem", right: "1rem", zIndex: 70 }}
-          className={`pss-toast mx-auto max-w-lg rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
+          className={`pss-toast mx-auto max-w-lg lg:max-w-2xl rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${
             toast.type === "ok"
               ? "bg-emerald-600 text-white"
               : "bg-red-600 text-white"

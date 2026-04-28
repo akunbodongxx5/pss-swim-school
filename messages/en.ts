@@ -2,7 +2,7 @@ import type { MessageTree } from "./types";
 
 const en: MessageTree = {
   appName: "PSS Swim",
-  nav: { schedule: "Schedule", students: "Students", coaches: "Coaches", more: "More" },
+  nav: { schedule: "Schedule", students: "Students", coaches: "Coaches", more: "More", reports: "Reports" },
   menu: {
     title: "Menu",
     home: "Home",
@@ -19,6 +19,8 @@ const en: MessageTree = {
     themeDark: "Dark",
     themeSystem: "System",
     language: "Language",
+    desktopMainNav: "Main",
+    desktopMoreNav: "More",
   },
   titles: {
     home: "Home",
@@ -28,6 +30,7 @@ const en: MessageTree = {
     waitlist: "Waitlist",
     login: "Role",
     settings: "School settings",
+    reports: "Student reports",
   },
   home: {
     headline: "Swim school management",
@@ -49,6 +52,10 @@ const en: MessageTree = {
     coach: "Coach",
     apply: "Apply",
     saving: "Saving\u2026",
+    coachPickLabel: "You are coaching as",
+    coachPickPlaceholder: "Select your name",
+    errCoachRequired: "Pick a coach from the list.",
+    errCoachInvalid: "Invalid coach.",
   },
   schedule: {
     coachReadOnly: "Coach mode: view only. Change role under Menu \u2192 Role.",
@@ -166,6 +173,33 @@ const en: MessageTree = {
       server_error: "Server error. Check database connection or server logs.",
       bad_response: "Invalid server response (not JSON). Check Vercel logs or request body size.",
     },
+    adminReportsToggleLabel: "Admin may write student reports",
+    adminReportsToggleHint:
+      "Off: admins only read coaches\u2019 reports. On: admins can also add notes (e.g. internal evaluation).",
+  },
+  reports: {
+    subtitle: "Progress notes for parents & internal coordination.",
+    needsCoachPick:
+      "Your coach profile isn\u2019t linked yet. Open Menu → Role, choose Coach, then pick your name.",
+    openLogin: "Open role",
+    studentLabel: "Student",
+    contentLabel: "Report",
+    contentPlaceholder:
+      "e.g. kick technique progress, attendance, something parents should know.",
+    submit: "Submit report",
+    submitting: "Sending…",
+    empty: "No reports yet.",
+    saved: "Report saved.",
+    loadError: "Could not load reports.",
+    forbiddenAdminWrite:
+      "Only admins with writing permission can add reports. Enable it in School settings.",
+    authorCoach: "Coach",
+    authorAdmin: "Admin",
+    listTitle: "Report history",
+    adminReadHint: "You see all coach reports. You may write notes only if enabled in School settings.",
+    formTitleCoach: "New report",
+    formTitleAdmin: "Write as admin",
+    refresh: "Reload",
   },
   waitlist: {
     hint: "Simple queue; mark done after they join a class.",

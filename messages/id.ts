@@ -2,7 +2,7 @@ import type { MessageTree } from "./types";
 
 const id: MessageTree = {
   appName: "PSS Swim",
-  nav: { schedule: "Jadwal", students: "Murid", coaches: "Pelatih", more: "Lainnya" },
+  nav: { schedule: "Jadwal", students: "Murid", coaches: "Pelatih", more: "Lainnya", reports: "Laporan" },
   menu: {
     title: "Menu",
     home: "Beranda",
@@ -19,6 +19,8 @@ const id: MessageTree = {
     themeDark: "Gelap",
     themeSystem: "Sistem",
     language: "Bahasa",
+    desktopMainNav: "Utama",
+    desktopMoreNav: "Lainnya",
   },
   titles: {
     home: "Beranda",
@@ -28,6 +30,7 @@ const id: MessageTree = {
     waitlist: "Waitlist",
     login: "Peran",
     settings: "Pengaturan sekolah",
+    reports: "Laporan murid",
   },
   home: {
     headline: "Manajemen swim school",
@@ -49,6 +52,10 @@ const id: MessageTree = {
     coach: "Pelatih",
     apply: "Terapkan",
     saving: "Menyimpan\u2026",
+    coachPickLabel: "Anda sebagai pelatih",
+    coachPickPlaceholder: "Pilih nama Anda",
+    errCoachRequired: "Pilih pelatih dari daftar.",
+    errCoachInvalid: "Pelatih tidak valid.",
   },
   schedule: {
     coachReadOnly: "Mode pelatih: hanya melihat. Ubah peran di Menu \u2192 Peran.",
@@ -166,6 +173,31 @@ const id: MessageTree = {
       server_error: "Server error. Cek koneksi database atau log server.",
       bad_response: "Respons server tidak valid (bukan JSON). Cek log Vercel atau ukuran body.",
     },
+    adminReportsToggleLabel: "Admin boleh menulis laporan murid",
+    adminReportsToggleHint:
+      "Mati: admin hanya membaca laporan dari pelatih. Nyala: admin juga bisa menulis catatan (mis. evaluasi internal).",
+  },
+  reports: {
+    subtitle: "Catatan perkembangan untuk orang tua & koordinasi internal.",
+    needsCoachPick:
+      "Sesi pelatih belum memilih nama di halaman Peran. Buka Menu → Peran, pilih Pelatih lalu pilih nama Anda.",
+    openLogin: "Buka Peran",
+    studentLabel: "Murid",
+    contentLabel: "Isi laporan",
+    contentPlaceholder: "Contoh: kemajuan teknik kaki, kehadiran, hal yang perlu diperhatikan orang tua.",
+    submit: "Kirim laporan",
+    submitting: "Mengirim…",
+    empty: "Belum ada laporan.",
+    saved: "Laporan tersimpan.",
+    loadError: "Gagal memuat laporan.",
+    forbiddenAdminWrite: "Hanya admin dengan izin menulis yang bisa menambah laporan. Aktifkan di Pengaturan sekolah.",
+    authorCoach: "Pelatih",
+    authorAdmin: "Admin",
+    listTitle: "Riwayat laporan",
+    adminReadHint: "Anda melihat semua laporan dari pelatih. Tulis catatan hanya jika opsi di Pengaturan diaktifkan.",
+    formTitleCoach: "Tulis laporan baru",
+    formTitleAdmin: "Tulis sebagai admin",
+    refresh: "Muat ulang",
   },
   waitlist: {
     hint: "Antrian murid menunggu slot; tandai selesai setelah masuk kelas.",

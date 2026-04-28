@@ -88,7 +88,7 @@ export function HomeClient() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
@@ -100,7 +100,7 @@ export function HomeClient() {
           ))}
         </div>
       ) : stats ? (
-        <div className="pss-stagger grid grid-cols-2 gap-3">
+        <div className="pss-stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
           {cards.map((c, i) => (
             <div
               key={c.label}
@@ -121,10 +121,10 @@ export function HomeClient() {
         <p className="text-sm text-[var(--muted)]">{t("home.noData")}</p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 lg:max-w-2xl lg:flex-row lg:gap-4">
         <Link
           href="/jadwal"
-          className="pss-btn group flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 px-5 text-left text-sm font-bold text-white shadow-lg shadow-sky-600/25 active:scale-[0.99]"
+          className="pss-btn group flex min-h-14 flex-1 items-center justify-between gap-3 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 px-5 text-left text-sm font-bold text-white shadow-lg shadow-sky-600/25 active:scale-[0.99]"
         >
           <span className="flex items-center gap-2">
             <CalendarRange className="h-5 w-5" />
@@ -134,7 +134,7 @@ export function HomeClient() {
         </Link>
         <Link
           href="/murid"
-          className="pss-btn flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-zinc-200/90 bg-[var(--surface)] px-5 text-sm font-bold text-[var(--text)] shadow-sm ring-1 ring-black/[0.03] active:bg-zinc-50 dark:border-zinc-700 dark:active:bg-zinc-800/80"
+          className="pss-btn flex min-h-14 flex-1 items-center justify-between gap-3 rounded-2xl border border-zinc-200/90 bg-[var(--surface)] px-5 text-sm font-bold text-[var(--text)] shadow-sm ring-1 ring-black/[0.03] active:bg-zinc-50 dark:border-zinc-700 dark:active:bg-zinc-800/80"
         >
           <span className="flex items-center gap-2">
             <Users className="h-5 w-5" />

@@ -2,7 +2,7 @@ export type Locale = "id" | "en";
 
 export type MessageTree = {
   appName: string;
-  nav: { schedule: string; students: string; coaches: string; more: string };
+  nav: { schedule: string; students: string; coaches: string; more: string; reports: string };
   menu: {
     title: string;
     home: string;
@@ -18,6 +18,9 @@ export type MessageTree = {
     themeDark: string;
     themeSystem: string;
     language: string;
+    /** Label grup di sidebar desktop (lg+) */
+    desktopMainNav: string;
+    desktopMoreNav: string;
   };
   titles: {
     home: string;
@@ -27,6 +30,7 @@ export type MessageTree = {
     waitlist: string;
     login: string;
     settings: string;
+    reports: string;
   };
   home: {
     headline: string;
@@ -48,6 +52,10 @@ export type MessageTree = {
     coach: string;
     apply: string;
     saving: string;
+    coachPickLabel: string;
+    coachPickPlaceholder: string;
+    errCoachRequired: string;
+    errCoachInvalid: string;
   };
   schedule: {
     coachReadOnly: string;
@@ -162,6 +170,29 @@ export type MessageTree = {
       server_error: string;
       bad_response: string;
     };
+    adminReportsToggleLabel: string;
+    adminReportsToggleHint: string;
+  };
+  reports: {
+    subtitle: string;
+    needsCoachPick: string;
+    openLogin: string;
+    studentLabel: string;
+    contentLabel: string;
+    contentPlaceholder: string;
+    submit: string;
+    submitting: string;
+    empty: string;
+    saved: string;
+    loadError: string;
+    forbiddenAdminWrite: string;
+    authorCoach: string;
+    authorAdmin: string;
+    listTitle: string;
+    adminReadHint: string;
+    formTitleCoach: string;
+    formTitleAdmin: string;
+    refresh: string;
   };
   waitlist: {
     hint: string;

@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 export type SchoolBrandingDTO = {
   schoolName: string;
   logoDataUrl: string | null;
+  /** Admin boleh menulis laporan (selain membaca). */
+  adminCanWriteStudentReports: boolean;
 };
 
 const DEFAULT_NAME = "Swim School";
@@ -18,7 +20,7 @@ export const ensureSchoolBrandingRow = cache(async function ensureSchoolBranding
   try {
     await withDbRetry(() =>
       prisma.schoolBranding.create({
-        data: { id: 1, schoolName: DEFAULT_NAME, logoDataUrl: null },
+        data: { id: 1, schoolName: DEFAULT_NAME, logoDataUrl: null, adminCanWriteStudentReports: false },
       }),
     );
   } catch {
@@ -40,9 +42,15 @@ export const getSchoolBrandingMeta = cache(async function getSchoolBrandingMeta(
 
 export const getSchoolBranding = cache(async function getSchoolBranding(): Promise<SchoolBrandingDTO> {
   await ensureSchoolBrandingRow();
-  const row = await withDbRetry(() => prisma.schoolBranding.findUnique({ where: { id: 1 } }));
+  const row = await withDbRetry(() =>
+    prisma.schoolBranding.findUnique({
+      where: { id: 1 },
+      select: { schoolName: true, logoDataUrl: true, adminCanWriteStudentReports: true },
+    }),
+  );
   return {
     schoolName: row?.schoolName?.trim() || DEFAULT_NAME,
     logoDataUrl: row?.logoDataUrl?.trim() || null,
+    adminCanWriteStudentReports: row?.adminCanWriteStudentReports ?? false,
   };
 });

@@ -49,9 +49,13 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
 
-    let body: { schoolName?: unknown; logoDataUrl?: unknown };
+    let body: { schoolName?: unknown; logoDataUrl?: unknown; adminCanWriteStudentReports?: unknown };
     try {
-      body = (await req.json()) as { schoolName?: unknown; logoDataUrl?: unknown };
+      body = (await req.json()) as {
+        schoolName?: unknown;
+        logoDataUrl?: unknown;
+        adminCanWriteStudentReports?: unknown;
+      };
     } catch {
       return NextResponse.json({ error: "schoolName_invalid" }, { status: 400 });
     }
@@ -71,12 +75,23 @@ export async function PUT(req: Request) {
     }
 
     const logoChanged = logoResolved !== existingLogo;
+    let adminWrite = existing?.adminCanWriteStudentReports ?? false;
+    if (typeof body.adminCanWriteStudentReports === "boolean") {
+      adminWrite = body.adminCanWriteStudentReports;
+    }
+
     await prisma.schoolBranding.upsert({
       where: { id: 1 },
-      create: { id: 1, schoolName: nameResult, logoDataUrl: logoResolved as string | null },
+      create: {
+        id: 1,
+        schoolName: nameResult,
+        logoDataUrl: logoResolved as string | null,
+        adminCanWriteStudentReports: typeof body.adminCanWriteStudentReports === "boolean" ? body.adminCanWriteStudentReports : false,
+      },
       update: {
         schoolName: nameResult,
         logoDataUrl: logoResolved as string | null,
+        adminCanWriteStudentReports: adminWrite,
         ...(logoChanged ? { logoVersion: { increment: 1 } } : {}),
       },
     });

@@ -9,8 +9,13 @@
     "dev": "next dev -p 3000",
     "dev:fresh": "npx --yes kill-port 3000 && next dev -p 3000",
     "build": "next build",
-    "start": "next start",
-    "preview": "npx --yes kill-port 3000 && next start -p 3000",
+    "start": "next start -p 3000",
+    "preview": "next dev -p 3000",
+    "preview:prod": "next build && npx --yes kill-port 3000 && next start -p 3000",
+    "preview:only": "npx --yes kill-port 3000 && next start -p 3000",
+    "build:node20": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-with-node20.ps1 npm run build",
+    "preview:node20": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-with-node20.ps1 npm run preview",
+    "preview:prod:node20": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-with-node20.ps1 npm run preview:prod",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -20,7 +25,7 @@
   "dependencies": {
     "@prisma/client": "^6.5.0",
     "lucide-react": "^1.7.0",
-    "next": "14.2.23",
+    "next": "14.2.35",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sharp": "^0.34.5"
@@ -31,7 +36,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "eslint": "^8.57.1",
-    "eslint-config-next": "14.2.23",
+    "eslint-config-next": "14.2.35",
     "prisma": "^6.5.0",
     "tailwindcss": "^4.0.14",
     "typescript": "^5.8.2"

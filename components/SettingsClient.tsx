@@ -18,6 +18,7 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
   const router = useRouter();
   const [schoolName, setSchoolName] = useState(initialBranding.schoolName);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(initialBranding.logoDataUrl);
+  const [adminReportsWrite, setAdminReportsWrite] = useState(initialBranding.adminCanWriteStudentReports);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
 
@@ -52,7 +53,7 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
-        body: JSON.stringify({ schoolName, logoDataUrl }),
+        body: JSON.stringify({ schoolName, logoDataUrl, adminCanWriteStudentReports: adminReportsWrite }),
       });
 
       const raw = await res.text();
@@ -168,6 +169,21 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
         ) : null}
       </div>
 
+      <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-2)]/70 p-4 shadow-sm">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={adminReportsWrite}
+            onChange={(e) => setAdminReportsWrite(e.target.checked)}
+            className="mt-1 h-4 w-4 shrink-0 rounded border-[var(--border)] text-[var(--accent)] focus:ring-[var(--accent)]"
+          />
+          <span className="min-w-0">
+            <span className="block text-sm font-semibold text-[var(--text)]">{m.settings.adminReportsToggleLabel}</span>
+            <span className="mt-1 block text-xs leading-relaxed text-[var(--muted)]">{m.settings.adminReportsToggleHint}</span>
+          </span>
+        </label>
+      </div>
+
       <SessionBundlesManager />
 
       {message ? (
@@ -180,7 +196,7 @@ export function SettingsClient({ initialBranding, role }: { initialBranding: Sch
         type="button"
         disabled={saving}
         onClick={() => void save()}
-        className="pss-btn flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-sky-600 to-cyan-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-sky-600/25 disabled:opacity-50"
+        className="pss-btn flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[var(--accent)] to-[var(--mint)] py-3.5 text-sm font-bold text-white shadow-lg shadow-[var(--accent)]/30 disabled:opacity-50"
       >
         <Save className="h-4 w-4" />
         {saving ? m.settings.saving : m.settings.save}

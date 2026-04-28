@@ -13,6 +13,8 @@ model SchoolBranding {
   schoolName  String  @default("Swim School")
   logoDataUrl String? @db.Text
   logoVersion Int     @default(1)
+  /// Admin boleh menulis laporan murid (selain membaca); pelatih selalu bisa menulis untuk muridnya.
+  adminCanWriteStudentReports Boolean @default(false)
 
   swimLevels     SwimLevel[]
   sessionBundles SessionBundleDefinition[]
@@ -67,6 +69,7 @@ model Coach {
 
   sessionsPrimary   ScheduledSession[] @relation("CoachPrimary")
   sessionsSecondary ScheduledSession[] @relation("CoachSecondary")
+  studentReports    StudentReport[]
 }
 
 model Student {
@@ -79,6 +82,24 @@ model Student {
   conflictsA  ConflictPair[] @relation("ConflictA")
   conflictsB  ConflictPair[] @relation("ConflictB")
   waitlist    WaitlistEntry[]
+  reports     StudentReport[]
+}
+
+model StudentReport {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  /// Pelatih penulis; null jika admin yang menulis (saat toggle aktif).
+  authorCoachId String?
+  authorCoach   Coach? @relation(fields: [authorCoachId], references: [id], onDelete: SetNull)
+  authoredByAdmin Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([authorCoachId])
+  @@index([createdAt])
 }
 
 model ConflictPair {

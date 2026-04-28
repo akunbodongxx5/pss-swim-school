@@ -27,6 +27,7 @@ export function BrandingProvider({
     setBranding({
       schoolName: typeof d.schoolName === "string" ? d.schoolName : initial.schoolName,
       logoDataUrl: d.logoDataUrl ?? null,
+      adminCanWriteStudentReports: typeof d.adminCanWriteStudentReports === "boolean" ? d.adminCanWriteStudentReports : initial.adminCanWriteStudentReports,
     });
   }, [initial.schoolName]);
 
